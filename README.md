@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Teaching Hospital Platform
 
-## Getting Started
+A simulated hospital management system and medical-student clinical-education
+platform, sharing one backend, one database, and one role-based permission
+model, by [Kudzaishe Majeza](https://github.com/Majeezy).
 
-First, run the development server:
+**This is a portfolio/educational project.** All data is fictional. It is
+not intended for real patient data, real diagnoses, or any real clinical
+use — see `docs/security.md` (coming in Phase 0) for more on that boundary.
+
+**Status:** 🚧 In active development — Phase 0 (Foundations).
+
+## What this is
+
+Two connected halves:
+
+1. **Hospital management** — patients, doctors, appointments, departments,
+   clinical notes, diagnoses, prescriptions, test results.
+2. **Medical student education** — placements, clinical shadowing (scoped,
+   read-only access to specific appointments), learning activities,
+   reflections, supervisor feedback, competency tracking, a logbook computed
+   from real records.
+
+The two connect through one relationship: a student can be assigned to
+shadow a specific doctor's appointment with explicitly scoped access — never
+unrestricted access to a patient's full record.
+
+Full design rationale, the entity-relationship diagram, the permissions
+matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
+
+## Tech stack
+
+- Next.js 16 (App Router), TypeScript, Tailwind CSS
+- PostgreSQL (Neon) + Prisma
+- Auth.js (database sessions, bcrypt-hashed credentials)
+- shadcn/ui, Recharts
+- Vitest + Playwright
+- Deployed on Vercel
+
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build log
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [x] Phase 0, Stage 1 — Project setup, GitHub + Vercel pipeline
+- [ ] Phase 0, Stage 2 — Database schema (Prisma + Neon)
+- [ ] Phase 0, Stage 3 — Authentication
+- [ ] Phase 0, Stage 4 — Core RBAC + audit logging
+- [ ] Phase 1 — Hospital core (staff, patients, appointments, clinical records, dashboards)
+- [ ] Phase 2 — Education platform (students, placements, shadowing, learning activities, competencies)
+- [ ] Phase 3 — Cross-cutting (notifications, search)
+- [ ] Phase 4 — Harden & ship (security review, E2E tests, polish, deploy, docs)
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `docs/architecture.md` for what each phase actually contains.
