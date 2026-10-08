@@ -411,6 +411,18 @@ layout, page, and server action exactly as designed — the proxy doesn't
 replace that, it just catches the common "not logged in at all" case
 before it can hit the buggy code path.
 
+**Stage 3 update:** the same bug recurred for role-mismatch redirects — an
+authenticated patient hitting an admin-only route still fell through to
+the buggy layout-level redirect, since the proxy only checked "is there a
+token," not "is this token allowed here." Verified directly against
+response bodies that nothing ever leaked — the wrong role just saw a
+broken page, never the other role's data — but it's a real UX bug.
+`proxy.ts` now also checks role-restricted prefixes (`/admin`, `/patient`)
+against the token's embedded `roles` claim, redirecting to `/dashboard`
+on mismatch before Cache Components' rendering ever starts. The pattern
+holds: proxy catches the common cases cheaply and early; `lib/permissions.ts`
+remains the authoritative, DB-fresh backstop for everything else.
+
 ## Summary: deviations from the original brief
 
 - Supervisor modeled as a capability on Doctor/Nurse, not a separate
