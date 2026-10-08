@@ -1,5 +1,10 @@
 import type { RoleName } from "@prisma/client";
-import { Building2, LayoutDashboard, type LucideIcon } from "lucide-react";
+import {
+  Building2,
+  LayoutDashboard,
+  Stethoscope,
+  type LucideIcon,
+} from "lucide-react";
 
 export type NavItem = {
   href: string;
@@ -15,6 +20,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/admin/departments",
     label: "Departments",
     icon: Building2,
+    roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"],
+  },
+  {
+    href: "/admin/staff",
+    label: "Staff",
+    icon: Stethoscope,
     roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"],
   },
 ];
