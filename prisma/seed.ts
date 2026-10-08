@@ -1,4 +1,13 @@
 import { prisma } from "../lib/prisma";
+import { hashPassword } from "../lib/password";
+
+// Fictional, documented in README -- not a real credential. Admins provision
+// every other staff/student account, so one has to exist to bootstrap that.
+const DEMO_ADMIN = {
+  email: "admin@teachinghospital.test",
+  password: "DemoAdmin123!",
+  name: "Demo Hospital Admin",
+};
 
 const ROLES = [
   "SYSTEM_ADMIN",
@@ -67,7 +76,25 @@ async function main() {
     });
   }
 
-  console.log("Seeded roles, departments, and competency catalog.");
+  const adminRole = await prisma.role.findUniqueOrThrow({
+    where: { name: "HOSPITAL_ADMIN" },
+  });
+
+  const passwordHash = await hashPassword(DEMO_ADMIN.password);
+  await prisma.user.upsert({
+    where: { email: DEMO_ADMIN.email },
+    update: {},
+    create: {
+      name: DEMO_ADMIN.name,
+      email: DEMO_ADMIN.email,
+      passwordHash,
+      roles: { create: { roleId: adminRole.id } },
+    },
+  });
+
+  console.log(
+    "Seeded roles, departments, competency catalog, and demo admin account.",
+  );
 }
 
 main()
