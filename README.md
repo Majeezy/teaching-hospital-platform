@@ -10,6 +10,13 @@ use — see `docs/security.md` (coming in Phase 0) for more on that boundary.
 
 **Status:** 🚧 In active development — Phase 0 (Foundations).
 
+## Database
+
+PostgreSQL via [Neon](https://neon.tech). The runtime app connects through
+Neon's pooled endpoint using `@prisma/adapter-pg`; the Prisma CLI
+(migrations, seeding) uses the direct endpoint, configured in
+`prisma.config.ts` rather than `schema.prisma` (a Prisma 7 change).
+
 ## What this is
 
 Two connected halves:
@@ -41,6 +48,9 @@ matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
 
 ```bash
 npm install
+cp .env.example .env.local   # then fill in your own Neon connection strings
+npx prisma migrate dev       # applies the schema to your database
+npx prisma db seed           # seeds roles, departments, competency catalog
 npm run dev
 ```
 
@@ -49,7 +59,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Build log
 
 - [x] Phase 0, Stage 1 — Project setup, GitHub + Vercel pipeline
-- [ ] Phase 0, Stage 2 — Database schema (Prisma + Neon)
+- [x] Phase 0, Stage 2 — Database schema (Prisma + Neon)
 - [ ] Phase 0, Stage 3 — Authentication
 - [ ] Phase 0, Stage 4 — Core RBAC + audit logging
 - [ ] Phase 1 — Hospital core (staff, patients, appointments, clinical records, dashboards)
