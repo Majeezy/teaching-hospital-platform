@@ -391,6 +391,26 @@ increment rather than a horizontal layer:
 | 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by doctors during/after an appointment; patients see the permitted subset of their own. `Document` (file uploads) is deferred — no storage provider chosen, and nothing else in this phase needs one. |
 | 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. |
 
+### Route protection: proxy.ts + server-side checks, not either alone
+
+Stage 1 surfaced a real Next.js 16 bug: a `redirect()` thrown inside a
+Suspense-wrapped dashboard layout produced a correct `NEXT_REDIRECT` digest
+(confirmed in server logs) but the response reaching the client stayed a
+broken `200` instead — Cache Components' dev-mode "instant UI" validation
+pass appears to swallow redirects thrown this way. `instant = false`
+(Next's own documented opt-out) didn't resolve it.
+
+**Fix: route protection now happens in two layers.** `proxy.ts` (Next 16
+renamed `middleware.ts` → `proxy.ts`, and it now runs on the Node.js
+runtime rather than Edge) does a coarse, cheap check — does a valid
+session token exist at all — via `next-auth/jwt`'s `getToken()`, before
+any of Cache Components' rendering/caching machinery runs, which sidesteps
+the bug entirely. The authoritative, DB-fresh `isActive`/role checks
+(`requireUser`/`requireRole` in `lib/permissions.ts`) still run in every
+layout, page, and server action exactly as designed — the proxy doesn't
+replace that, it just catches the common "not logged in at all" case
+before it can hit the buggy code path.
+
 ## Summary: deviations from the original brief
 
 - Supervisor modeled as a capability on Doctor/Nurse, not a separate
