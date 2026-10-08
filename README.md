@@ -9,7 +9,7 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 1 (Hospital core), Stage 1.
+**Status:** 🚧 In active development — Phase 1 (Hospital core), Stage 2.
 
 ## Database
 
@@ -83,7 +83,7 @@ another user?"), which a mocked Prisma client can't meaningfully verify.
 - [x] Phase 0, Stage 3 — Authentication
 - [x] Phase 0, Stage 4 — Core RBAC + audit logging
 - [x] Phase 1, Stage 1 — Dashboard shell + Department management
-- [ ] Phase 1, Stage 2 — Staff management
+- [x] Phase 1, Stage 2 — Staff management
 - [ ] Phase 1, Stage 3 — Patient management
 - [ ] Phase 1, Stage 4 — Appointments
 - [ ] Phase 1, Stage 5 — Clinical records
