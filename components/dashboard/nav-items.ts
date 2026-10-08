@@ -3,6 +3,8 @@ import {
   Building2,
   LayoutDashboard,
   Stethoscope,
+  User,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +29,18 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Staff",
     icon: Stethoscope,
     roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"],
+  },
+  {
+    href: "/admin/patients",
+    label: "Patients",
+    icon: UserRound,
+    roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"],
+  },
+  {
+    href: "/patient/profile",
+    label: "My Profile",
+    icon: User,
+    roles: ["PATIENT"],
   },
 ];
 
