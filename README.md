@@ -81,7 +81,12 @@ another user?"), which a mocked Prisma client can't meaningfully verify.
 - [x] Phase 0, Stage 2 — Database schema (Prisma + Neon)
 - [x] Phase 0, Stage 3 — Authentication
 - [x] Phase 0, Stage 4 — Core RBAC + audit logging
-- [ ] Phase 1 — Hospital core (staff, patients, appointments, clinical records, dashboards)
+- [ ] Phase 1, Stage 1 — Dashboard shell + Department management
+- [ ] Phase 1, Stage 2 — Staff management
+- [ ] Phase 1, Stage 3 — Patient management
+- [ ] Phase 1, Stage 4 — Appointments
+- [ ] Phase 1, Stage 5 — Clinical records
+- [ ] Phase 1, Stage 6 — Role dashboards
 - [ ] Phase 2 — Education platform (students, placements, shadowing, learning activities, competencies)
 - [ ] Phase 3 — Cross-cutting (notifications, search)
 - [ ] Phase 4 — Harden & ship (security review, E2E tests, polish, deploy, docs)

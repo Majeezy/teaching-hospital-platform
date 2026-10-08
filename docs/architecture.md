@@ -372,10 +372,24 @@ education platform on top of a foundation that's already correct.
 | Phase | Contents |
 |---|---|
 | **0 — Foundations** | Project setup → database schema → authentication → core RBAC (incl. the audit-log helper, built now rather than at the old stage 19). |
-| **1 — Hospital core** | Staff/user management → patients → appointments → clinical records → Admin/Doctor/Patient dashboards. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
+| **1 — Hospital core** | See the Stage 1–6 breakdown below. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
 | **2 — Education platform** | Students → placements → shadowing → learning activities → logbook → competencies → supervisor feedback → Student dashboard. |
 | **3 — Cross-cutting** | Notifications → search → remaining dashboard polish. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Full security review → E2E tests → UI/UX polish → deployment → finish docs (README/ERD/setup guide kept current throughout, not written cold at the end). |
+
+### Phase 1 breakdown
+
+Broken into stages the same way Phase 0 was, each one a real demoable
+increment rather than a horizontal layer:
+
+| Stage | Contents |
+|---|---|
+| 1 | Dashboard shell (sidebar/topbar, role-aware nav) + shadcn/ui setup. First real feature: Department CRUD (admin-only) — proves the action → permission → audit → table → form pattern on the simplest possible domain object. |
+| 2 | Staff management: admin creates Doctor/Nurse accounts, views/deactivates staff. First real UI for Stage 0-4's `deactivateUser`. |
+| 3 | Patient management: admin patient list; patient self-service profile (emergency contact, blood type, allergies — deliberately skipped at registration). Doctor/Nurse "my patients" scoping is *not* finished here — it's only meaningful once appointments exist. |
+| 4 | Appointments: booking, full status lifecycle, per-role list views. Tightens Doctor/Nurse patient scoping from Stage 3, since "assigned patients" is defined through appointments. |
+| 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by doctors during/after an appointment; patients see the permitted subset of their own. `Document` (file uploads) is deferred — no storage provider chosen, and nothing else in this phase needs one. |
+| 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. |
 
 ## Summary: deviations from the original brief
 
