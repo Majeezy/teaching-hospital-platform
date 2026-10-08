@@ -1,0 +1,463 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enums ----------
+
+enum RoleName {
+  SYSTEM_ADMIN
+  HOSPITAL_ADMIN
+  DOCTOR
+  NURSE
+  STUDENT
+  PATIENT
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ShadowingAccessLevel {
+  OBSERVER_READ_ONLY
+}
+
+enum LearningActivityStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  REVIEWED
+}
+
+enum LogbookEntryType {
+  ENCOUNTER
+  OBSERVED_CONSULTATION
+  EMERGENCY_OBSERVATION
+  PROCEDURE_OBSERVED
+}
+
+// ---------- Identity ----------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  roles          UserRole[]
+  patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
+  nurseProfile   NurseProfile?
+  studentProfile StudentProfile?
+
+  authoredClinicalNotes ClinicalNote[]  @relation("ClinicalNoteAuthor")
+  authoredDiagnoses     Diagnosis[]     @relation("DiagnosisAuthor")
+  authoredPrescriptions Prescription[]  @relation("PrescriptionAuthor")
+  authoredTestOrders    TestOrder[]     @relation("TestOrderAuthor")
+  reviewedTestResults   TestResult[]    @relation("TestResultReviewer")
+  uploadedDocuments     Document[]      @relation("DocumentUploader")
+  competencyAssessmentsGiven CompetencyAssessment[] @relation("CompetencyAssessor")
+
+  notifications    Notification[]
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageRecipient")
+  auditLogs        AuditLog[]
+
+  givenFeedback    Feedback[] @relation("FeedbackGiver")
+  receivedFeedback Feedback[] @relation("FeedbackRecipient")
+}
+
+model Role {
+  id   String   @id @default(cuid())
+  name RoleName @unique
+
+  users UserRole[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Department {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  doctors      DoctorProfile[]
+  nurses       NurseProfile[]
+  appointments Appointment[]
+  placements   StudentPlacement[]
+}
+
+// ---------- Hospital profiles ----------
+
+model PatientProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  dateOfBirth      DateTime
+  contactPhone     String?
+  emergencyContact String?
+  bloodType        String?
+  allergies        String[]
+  createdAt        DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  clinicalNotes ClinicalNote[]
+  diagnoses     Diagnosis[]
+  prescriptions Prescription[]
+  testOrders    TestOrder[]
+  documents     Document[]
+}
+
+model DoctorProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  departmentId   String
+  specialization String
+  licenseNumber  String  @unique
+  canSupervise   Boolean @default(false)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department    @relation(fields: [departmentId], references: [id])
+  appointments Appointment[]
+
+  placementsSupervised StudentPlacement[]
+}
+
+model NurseProfile {
+  id           String @id @default(cuid())
+  userId       String @unique
+  departmentId String
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+}
+
+model StudentProfile {
+  id            String @id @default(cuid())
+  userId        String @unique
+  studentNumber String @unique
+  university    String
+  yearOfStudy   Int
+  program       String
+
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placements     StudentPlacement[]
+  shadowing      ShadowingAssignment[]
+  activities     LearningActivity[]
+  reflections    StudentReflection[]
+  competencies   StudentCompetency[]
+  logbookEntries ClinicalLogbookEntry[]
+}
+
+// ---------- Appointments & clinical records ----------
+
+model Appointment {
+  id              String            @id @default(cuid())
+  patientId       String
+  doctorId        String
+  departmentId    String
+  scheduledAt     DateTime
+  durationMinutes Int               @default(30)
+  status          AppointmentStatus @default(SCHEDULED)
+  reason          String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  patient    PatientProfile @relation(fields: [patientId], references: [id])
+  doctor     DoctorProfile  @relation(fields: [doctorId], references: [id])
+  department Department     @relation(fields: [departmentId], references: [id])
+
+  clinicalNotes      ClinicalNote[]
+  diagnoses          Diagnosis[]
+  prescriptions      Prescription[]
+  testOrders         TestOrder[]
+  shadowing          ShadowingAssignment[]
+  learningActivities LearningActivity[]
+  logbookEntries     ClinicalLogbookEntry[]
+
+  @@index([doctorId, scheduledAt])
+  @@index([patientId])
+}
+
+model ClinicalNote {
+  id            String   @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  authorId      String
+  content       String
+  createdAt     DateTime @default(now())
+
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  author      User           @relation("ClinicalNoteAuthor", fields: [authorId], references: [id])
+
+  @@index([patientId])
+}
+
+model Diagnosis {
+  id            String   @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  authorId      String
+  description   String
+  icdCode       String?
+  createdAt     DateTime @default(now())
+
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  author      User           @relation("DiagnosisAuthor", fields: [authorId], references: [id])
+
+  @@index([patientId])
+}
+
+model Prescription {
+  id            String   @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  authorId      String
+  medication    String
+  dosage        String
+  instructions  String?
+  createdAt     DateTime @default(now())
+
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  author      User           @relation("PrescriptionAuthor", fields: [authorId], references: [id])
+
+  @@index([patientId])
+}
+
+model TestOrder {
+  id            String   @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  authorId      String
+  testType      String
+  status        String   @default("ORDERED")
+  orderedAt     DateTime @default(now())
+
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  author      User           @relation("TestOrderAuthor", fields: [authorId], references: [id])
+  result      TestResult?
+
+  @@index([patientId])
+}
+
+model TestResult {
+  id           String   @id @default(cuid())
+  testOrderId  String   @unique
+  result       String
+  resultedAt   DateTime @default(now())
+  reviewedById String?
+
+  testOrder  TestOrder @relation(fields: [testOrderId], references: [id], onDelete: Cascade)
+  reviewedBy User?     @relation("TestResultReviewer", fields: [reviewedById], references: [id])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  patientId    String
+  uploadedById String
+  fileUrl      String
+  type         String
+  uploadedAt   DateTime @default(now())
+
+  patient    PatientProfile @relation(fields: [patientId], references: [id])
+  uploadedBy User           @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([patientId])
+}
+
+// ---------- Education platform ----------
+
+model StudentPlacement {
+  id           String   @id @default(cuid())
+  studentId    String
+  departmentId String
+  supervisorId String
+  startDate    DateTime
+  endDate      DateTime
+  status       String   @default("ACTIVE")
+
+  student    StudentProfile @relation(fields: [studentId], references: [id])
+  department Department     @relation(fields: [departmentId], references: [id])
+  supervisor DoctorProfile  @relation(fields: [supervisorId], references: [id])
+
+  @@index([studentId])
+}
+
+model ShadowingAssignment {
+  id            String               @id @default(cuid())
+  appointmentId String
+  studentId     String
+  accessLevel   ShadowingAccessLevel @default(OBSERVER_READ_ONLY)
+  createdAt     DateTime             @default(now())
+
+  appointment Appointment    @relation(fields: [appointmentId], references: [id])
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+
+  @@unique([appointmentId, studentId])
+}
+
+model LearningActivity {
+  id                    String                 @id @default(cuid())
+  studentId             String
+  title                 String
+  description           String
+  relatedAppointmentId  String?
+  status                LearningActivityStatus @default(ASSIGNED)
+  dueDate               DateTime?
+  completedAt           DateTime?
+
+  student            StudentProfile @relation(fields: [studentId], references: [id])
+  relatedAppointment Appointment?   @relation(fields: [relatedAppointmentId], references: [id])
+  reflection         StudentReflection?
+  feedback           Feedback[]
+
+  @@index([studentId])
+}
+
+model StudentReflection {
+  id                 String   @id @default(cuid())
+  learningActivityId String   @unique
+  studentId          String
+  content            String
+  submittedAt        DateTime @default(now())
+
+  learningActivity LearningActivity @relation(fields: [learningActivityId], references: [id], onDelete: Cascade)
+  student          StudentProfile   @relation(fields: [studentId], references: [id])
+}
+
+model Feedback {
+  id                    String   @id @default(cuid())
+  givenById             String
+  givenToId             String
+  relatedActivityId     String?
+  rating                Int?
+  strengths             String?
+  areasForImprovement   String?
+  recommendedActivities String?
+  createdAt             DateTime @default(now())
+
+  givenBy  User              @relation("FeedbackGiver", fields: [givenById], references: [id])
+  givenTo  User              @relation("FeedbackRecipient", fields: [givenToId], references: [id])
+  activity LearningActivity? @relation(fields: [relatedActivityId], references: [id])
+
+  @@index([givenToId])
+}
+
+model Competency {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  studentCompetencies StudentCompetency[]
+}
+
+model StudentCompetency {
+  id             String    @id @default(cuid())
+  studentId      String
+  competencyId   String
+  currentLevel   Int       @default(0)
+  lastAssessedAt DateTime?
+
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  competency  Competency     @relation(fields: [competencyId], references: [id])
+  assessments CompetencyAssessment[]
+
+  @@unique([studentId, competencyId])
+}
+
+model CompetencyAssessment {
+  id                   String   @id @default(cuid())
+  studentCompetencyId  String
+  assessedById         String
+  score                Int
+  notes                String?
+  assessedAt           DateTime @default(now())
+
+  studentCompetency StudentCompetency @relation(fields: [studentCompetencyId], references: [id], onDelete: Cascade)
+  assessedBy        User              @relation("CompetencyAssessor", fields: [assessedById], references: [id])
+}
+
+model ClinicalLogbookEntry {
+  id                   String           @id @default(cuid())
+  studentId            String
+  type                 LogbookEntryType
+  relatedAppointmentId String?
+  hours                Decimal          @default(0)
+  loggedAt             DateTime         @default(now())
+  notes                String?
+
+  student            StudentProfile @relation(fields: [studentId], references: [id])
+  relatedAppointment Appointment?   @relation(fields: [relatedAppointmentId], references: [id])
+
+  @@index([studentId])
+}
+
+// ---------- Cross-cutting ----------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  recipientId String
+  subject     String?
+  body        String
+  sentAt      DateTime  @default(now())
+  readAt      DateTime?
+
+  sender    User @relation("MessageSender", fields: [senderId], references: [id])
+  recipient User @relation("MessageRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+}
