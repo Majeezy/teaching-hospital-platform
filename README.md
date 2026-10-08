@@ -8,7 +8,7 @@ model, by [Kudzaishe Majeza](https://github.com/Majeezy).
 not intended for real patient data, real diagnoses, or any real clinical
 use — see `docs/security.md` (coming in Phase 0) for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 0 (Foundations), Stage 3.
+**Status:** 🚧 In active development — Phase 0 (Foundations), Stage 4.
 
 ## Database
 
@@ -56,12 +56,31 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+**Demo admin account** (seeded, fictional — not a real credential, don't
+reuse this password anywhere real): `admin@teachinghospital.test` /
+`DemoAdmin123!`. Staff and student accounts are provisioned by an admin
+rather than self-registered, so this exists to bootstrap that — real
+admin-facing UI to provision other accounts lands in Phase 1.
+
+## Testing
+
+```bash
+npm test
+```
+
+Unit tests (`tests/unit/`) cover the pure authorization logic in
+`lib/permissions.ts`. Integration tests (`tests/integration/`) run against
+the real development database — same connection as the app itself — and
+clean up after themselves. No mocking the database: these tests exist
+specifically to catch real authorization bugs ("can a patient deactivate
+another user?"), which a mocked Prisma client can't meaningfully verify.
+
 ## Build log
 
 - [x] Phase 0, Stage 1 — Project setup, GitHub + Vercel pipeline
 - [x] Phase 0, Stage 2 — Database schema (Prisma + Neon)
 - [x] Phase 0, Stage 3 — Authentication
-- [ ] Phase 0, Stage 4 — Core RBAC + audit logging
+- [x] Phase 0, Stage 4 — Core RBAC + audit logging
 - [ ] Phase 1 — Hospital core (staff, patients, appointments, clinical records, dashboards)
 - [ ] Phase 2 — Education platform (students, placements, shadowing, learning activities, competencies)
 - [ ] Phase 3 — Cross-cutting (notifications, search)
