@@ -192,7 +192,7 @@ described in prose above and in the schema file once Stage 2 lands.)*
 | Backend | Server Actions (primary), Route Handlers only where needed | Colocated, fully typed end-to-end, no separate API contract to maintain for internal mutations. |
 | Database | PostgreSQL on Neon | Data is relational to its core — FKs everywhere, multi-table joins on every dashboard. Neon integrates natively with Vercel and has a real free tier. |
 | ORM | Prisma | Schema-first, fully typed queries, built-in migrations; the schema file doubles as readable documentation. |
-| Auth | Auth.js (NextAuth), Credentials provider, **database sessions**, bcrypt | See below. |
+| Auth | Auth.js (NextAuth v4), Credentials provider, **JWT sessions + DB-checked revocation**, bcrypt | See below. |
 | UI | Tailwind + shadcn/ui | shadcn components are copied into the repo, not installed as an opaque dependency — every dashboard/table/dialog used is code that can actually be read and modified. |
 | Charts | Recharts | Competency bars, admin dashboard metrics. |
 | Testing | Vitest (unit/integration) + Playwright (E2E) | |
@@ -207,12 +207,31 @@ client project under deadline — but it would hand the exact mechanics this
 project exists to teach (password hashing, session issuance, the RBAC
 layer) to a black box.
 
-**Decision: Auth.js, database sessions (not JWT), bcrypt for hashing.**
-Database sessions over JWT specifically because they're revocable instantly
-by deleting the session row — in a system simulating healthcare access,
-"immediately kill this person's access" is a real requirement, and JWTs
-can't do that without a parallel revocation list, which is more complexity
-for a worse result here.
+**Original decision: Auth.js, database sessions (not JWT), bcrypt for
+hashing.** Database sessions over JWT specifically because they're
+revocable instantly by deleting the session row — in a system simulating
+healthcare access, "immediately kill this person's access" is a real
+requirement, and JWTs can't do that without a parallel revocation list.
+
+**Revised during Stage 3, after implementation surfaced a real framework
+constraint:** `next-auth` resolved to the stable v4 line (v5/Auth.js is
+still pre-release). Reading v4's actual callback source showed that its
+Credentials provider *always* issues a JWT-signed cookie directly —
+`core/routes/callback.js` calls `jwt.encode()` unconditionally for
+`provider.type === "credentials"` and never touches the adapter's
+`createSession`/database-session methods, regardless of the configured
+`session.strategy`. Database sessions in v4 only ever apply to OAuth-style
+providers going through the adapter, which doesn't fit a Credentials-only
+app.
+
+Rather than fight the framework or depend on an unstable v5 beta for a
+portfolio project, the revocability *goal* is kept, implemented
+differently: **JWT sessions, with the `jwt` callback re-checking
+`isActive`/`roles` against the database on every request** instead of
+trusting the token's stale copy. Deactivating a user still takes effect on
+their very next request — same outcome, no adapter, no unstable
+dependency. The `@auth/prisma-adapter` package was installed, evaluated,
+and removed once this was confirmed; it isn't used.
 
 ## 8. Folder structure
 
@@ -369,5 +388,7 @@ education platform on top of a foundation that's already correct.
 - Audit logging built in Phase 0, not deferred.
 - Authorization tests written alongside each feature, not deferred to one
   final testing stage.
-- Database sessions over JWT — revocability matters more here than JWT's
-  statelessness benefit.
+- JWT sessions with DB-checked revocation, not true database sessions —
+  reversed in Stage 3 once implementation showed next-auth v4's Credentials
+  provider never uses the adapter's database-session path regardless of
+  config. Same revocability outcome, different mechanism (see Section 7).
