@@ -141,6 +141,7 @@ model DoctorProfile {
   appointments Appointment[]
 
   placementsSupervised StudentPlacement[]
+  activitiesAssigned   LearningActivity[]
 }
 
 model NurseProfile {
@@ -323,6 +324,7 @@ model ShadowingAssignment {
 model LearningActivity {
   id                    String                 @id @default(cuid())
   studentId             String
+  supervisorId          String
   title                 String
   description           String
   relatedAppointmentId  String?
@@ -331,11 +333,13 @@ model LearningActivity {
   completedAt           DateTime?
 
   student            StudentProfile @relation(fields: [studentId], references: [id])
+  supervisor         DoctorProfile  @relation(fields: [supervisorId], references: [id])
   relatedAppointment Appointment?   @relation(fields: [relatedAppointmentId], references: [id])
   reflection         StudentReflection?
   feedback           Feedback[]
 
   @@index([studentId])
+  @@index([supervisorId])
 }
 
 model StudentReflection {
