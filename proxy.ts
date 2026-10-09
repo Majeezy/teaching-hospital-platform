@@ -21,7 +21,7 @@ import type { RoleName } from "@prisma/client";
 // doesn't replace that, it just catches the common cases earlier using
 // the token's (possibly slightly stale) embedded roles, before they can
 // hit the buggy render path.
-const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/patient"];
+const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/patient", "/appointments"];
 
 const ROLE_RESTRICTED_PREFIXES: { prefix: string; roles: RoleName[] }[] = [
   { prefix: "/admin", roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"] },
@@ -61,5 +61,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/patient/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/patient/:path*",
+    "/appointments/:path*",
+  ],
 };
