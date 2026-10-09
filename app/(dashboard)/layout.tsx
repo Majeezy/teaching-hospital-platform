@@ -1,6 +1,10 @@
 import { ReactNode, Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/permissions";
+import {
+  getUnreadNotificationCount,
+  listNotifications,
+} from "@/actions/notifications";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
 
@@ -27,11 +31,21 @@ async function DashboardShell({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
+  const [notifications, unreadCount] = await Promise.all([
+    listNotifications(),
+    getUnreadNotificationCount(),
+  ]);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar roles={user.roles} />
       <div className="flex flex-1 flex-col">
-        <Topbar name={user.name} roles={user.roles} />
+        <Topbar
+          name={user.name}
+          roles={user.roles}
+          notifications={notifications}
+          unreadCount={unreadCount}
+        />
         <main className="flex-1 p-4 md:p-8">{children}</main>
       </div>
     </div>

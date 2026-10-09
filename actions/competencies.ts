@@ -11,6 +11,7 @@ import {
   type SessionUser,
 } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 import { assertCanManageStudent } from "@/actions/learning-activities";
 
 const recordAssessmentSchema = z.object({
@@ -37,6 +38,17 @@ export async function recordAssessmentForUser(
 ) {
   const data = recordAssessmentSchema.parse(input);
   await assertCanManageStudent(user, data.studentId);
+
+  const [studentProfile, competency] = await Promise.all([
+    prisma.studentProfile.findUniqueOrThrow({
+      where: { id: data.studentId },
+      select: { userId: true },
+    }),
+    prisma.competency.findUniqueOrThrow({
+      where: { id: data.competencyId },
+      select: { name: true },
+    }),
+  ]);
 
   const studentCompetency = await prisma.studentCompetency.upsert({
     where: {
@@ -74,6 +86,13 @@ export async function recordAssessmentForUser(
       competencyId: data.competencyId,
       score: data.score,
     },
+  });
+
+  await notify({
+    userId: studentProfile.userId,
+    type: "COMPETENCY_ASSESSED",
+    title: "Competency assessed",
+    body: `You were assessed on ${competency.name}: ${data.score}/5.`,
   });
 
   return assessment;
