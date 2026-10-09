@@ -90,6 +90,43 @@ export async function listAppointmentsForUser(user: SessionUser) {
   throw new AuthorizationError("Your role does not have access to appointments.");
 }
 
+/**
+ * Single-appointment fetch with the same access rule as the list: admin
+ * (oversight), the assigned doctor, a nurse in the same department, or the
+ * owning patient. Used directly by the appointment detail page, and by
+ * actions/clinical-records.ts so record access follows the exact same
+ * rule as appointment access, in one place, rather than reimplemented.
+ */
+export async function getAppointmentForUser(
+  user: SessionUser,
+  appointmentId: string,
+) {
+  const appointment = await prisma.appointment.findUniqueOrThrow({
+    where: { id: appointmentId },
+    include: appointmentInclude,
+  });
+
+  const isAdmin = hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"]);
+  const [assignedDoctor, owningPatient] = await Promise.all([
+    isAssignedDoctor(user, appointment.doctorId),
+    isOwningPatient(user, appointment.patientId),
+  ]);
+
+  let deptNurse = false;
+  if (hasRole(user, "NURSE")) {
+    const nurseProfile = await prisma.nurseProfile.findUnique({
+      where: { userId: user.id },
+    });
+    deptNurse = nurseProfile?.departmentId === appointment.departmentId;
+  }
+
+  if (!isAdmin && !assignedDoctor && !owningPatient && !deptNurse) {
+    throw new AuthorizationError("You don't have access to this appointment.");
+  }
+
+  return { appointment, canEdit: assignedDoctor };
+}
+
 export async function listDoctorsForBookingForUser(user: SessionUser) {
   requireRole(user, "PATIENT");
   return prisma.doctorProfile.findMany({
@@ -138,7 +175,7 @@ export async function requestAppointmentForUser(
   return appointment;
 }
 
-async function isAssignedDoctor(user: SessionUser, doctorId: string) {
+export async function isAssignedDoctor(user: SessionUser, doctorId: string) {
   if (!hasRole(user, "DOCTOR")) return false;
   const profile = await prisma.doctorProfile.findUnique({
     where: { userId: user.id },
@@ -146,7 +183,7 @@ async function isAssignedDoctor(user: SessionUser, doctorId: string) {
   return profile?.id === doctorId;
 }
 
-async function isOwningPatient(user: SessionUser, patientId: string) {
+export async function isOwningPatient(user: SessionUser, patientId: string) {
   if (!hasRole(user, "PATIENT")) return false;
   const profile = await prisma.patientProfile.findUnique({
     where: { userId: user.id },
@@ -215,6 +252,11 @@ export async function updateAppointmentStatusForUser(
 export async function listAppointments() {
   const user = await requireUser();
   return listAppointmentsForUser(user);
+}
+
+export async function getAppointment(appointmentId: string) {
+  const user = await requireUser();
+  return getAppointmentForUser(user, appointmentId);
 }
 
 export async function listDoctorsForBooking() {
