@@ -392,7 +392,7 @@ increment rather than a horizontal layer:
 | 2 | Staff management: admin creates Doctor/Nurse accounts, views/deactivates staff. First real UI for Stage 0-4's `deactivateUser`. |
 | 3 | Patient management: admin patient list; patient self-service profile (emergency contact, blood type, allergies — deliberately skipped at registration). Doctor/Nurse "my patients" scoping is *not* finished here — it's only meaningful once appointments exist. |
 | 4 | Appointments: booking (patient selects a doctor directly — see deviations), full status lifecycle, per-role list views. Establishes Doctor/Nurse patient scoping, since "assigned patients" is defined through appointments. |
-| 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by doctors during/after an appointment; patients see the permitted subset of their own. `Document` (file uploads) is deferred — no storage provider chosen, and nothing else in this phase needs one. |
+| 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by the assigned doctor during/after an appointment. Admin is read-only here (oversight, not edit — the one entity in this app where admin doesn't have full access). Patients see their own records in full; `Document` (file uploads) deferred — no storage provider chosen, nothing else in this phase needs one. |
 | 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. |
 
 ### Route protection: proxy.ts + server-side checks, not either alone
@@ -447,3 +447,8 @@ remains the authoritative, DB-fresh backstop for everything else.
   `Appointment.doctorId` is a required FK from the Phase 0 schema, so
   deferred doctor assignment isn't possible without a migration. Doctor
   selection is an equally realistic booking pattern; not changed.
+- Phase 1 Stage 5: the permissions matrix's "permitted subset" phrase for
+  patient read access on clinical records is interpreted as "their own
+  records, in full" rather than field-level redaction — nothing else in
+  the data model has per-field visibility flags, and adding one would be
+  speculative scope beyond what's actually specified anywhere.
