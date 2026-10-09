@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, Clock, History } from "lucide-react";
+import { CalendarClock, ClipboardCheck, Clock, History, Users2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatTile } from "@/components/dashboard/StatTile";
 import type { getDoctorDashboardForUser } from "@/actions/dashboard";
@@ -100,6 +100,56 @@ export function DoctorDashboard({ data }: { data: Data }) {
           </CardContent>
         </Card>
       </div>
+
+      {data.supervisedStudents.length > 0 && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Users2 size={14} />
+                My students
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {data.supervisedStudents.map((placement) => (
+                <p key={placement.id} className="text-sm">
+                  {placement.student.user.name}
+                </p>
+              ))}
+              <Link
+                href="/placements"
+                className="mt-1 text-xs text-zinc-500 underline underline-offset-2"
+              >
+                View placements
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <ClipboardCheck size={14} />
+                Activities awaiting your feedback
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {data.activitiesAwaitingFeedback.length === 0 && (
+                <p className="text-sm text-zinc-500">Nothing to review.</p>
+              )}
+              {data.activitiesAwaitingFeedback.map((activity) => (
+                <Link
+                  key={activity.id}
+                  href={`/activities/${activity.id}`}
+                  className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                >
+                  <span className="font-medium">{activity.title}</span>
+                  <span className="text-zinc-500">{activity.student.user.name}</span>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
