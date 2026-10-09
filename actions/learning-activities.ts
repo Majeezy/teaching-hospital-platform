@@ -58,7 +58,7 @@ const activityInclude = {
  * appointmentId -- an activity doesn't need to be tied to any one
  * appointment at all.
  */
-async function assertCanManageStudent(user: SessionUser, studentId: string) {
+export async function assertCanManageStudent(user: SessionUser, studentId: string) {
   requireRole(user, "DOCTOR");
   const doctorProfile = await prisma.doctorProfile.findUniqueOrThrow({
     where: { userId: user.id },

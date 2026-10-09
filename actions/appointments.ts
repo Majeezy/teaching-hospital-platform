@@ -272,17 +272,49 @@ export async function updateAppointmentStatusForUser(
     }
   }
 
-  const updated = await prisma.appointment.update({
-    where: { id: appointmentId },
-    data: { status: newStatus },
-  });
+  // A completed appointment automatically logs clinical hours for every
+  // student who shadowed it -- the brief was explicit that the logbook
+  // must be "calculated from database records, not fake numbers," so
+  // this is the one and only place a ClinicalLogbookEntry gets created;
+  // there's no manual-entry UI. ALLOWED_TRANSITIONS has no path back out
+  // of COMPLETED, so this can only run once per appointment.
+  const shadowingStudents =
+    newStatus === "COMPLETED"
+      ? await prisma.shadowingAssignment.findMany({
+          where: { appointmentId },
+          select: { studentId: true },
+        })
+      : [];
+
+  const [updated] = await prisma.$transaction([
+    prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { status: newStatus },
+    }),
+    ...(shadowingStudents.length > 0
+      ? [
+          prisma.clinicalLogbookEntry.createMany({
+            data: shadowingStudents.map(({ studentId }) => ({
+              studentId,
+              type: "OBSERVED_CONSULTATION" as const,
+              relatedAppointmentId: appointmentId,
+              hours: appointment.durationMinutes / 60,
+            })),
+          }),
+        ]
+      : []),
+  ]);
 
   await audit({
     actorId: user.id,
     action: `APPOINTMENT_STATUS_${newStatus}`,
     entityType: "Appointment",
     entityId: appointmentId,
-    metadata: { from: appointment.status, to: newStatus },
+    metadata: {
+      from: appointment.status,
+      to: newStatus,
+      loggedForStudentIds: shadowingStudents.map((s) => s.studentId),
+    },
   });
 
   return updated;
