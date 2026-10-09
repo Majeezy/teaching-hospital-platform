@@ -1,10 +1,12 @@
 import type { RoleName } from "@prisma/client";
 import {
+  Award,
   BookOpen,
   Building2,
   Calendar,
   GraduationCap,
   LayoutDashboard,
+  NotebookTabs,
   Route,
   Stethoscope,
   User,
@@ -33,6 +35,18 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/activities",
     label: "Activities",
     icon: BookOpen,
+    roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN", "DOCTOR", "STUDENT"],
+  },
+  {
+    href: "/logbook",
+    label: "Logbook",
+    icon: NotebookTabs,
+    roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN", "DOCTOR", "STUDENT"],
+  },
+  {
+    href: "/competencies",
+    label: "Competencies",
+    icon: Award,
     roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN", "DOCTOR", "STUDENT"],
   },
   {
