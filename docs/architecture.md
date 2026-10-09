@@ -597,3 +597,23 @@ Phase 2 is now complete (Stages 1-6).
   the same "Staff" category the admin staff page already groups them
   under, rather than inventing a separate admin-only "Doctors" split
   that doesn't exist anywhere else in the UI.
+- Phase 3 Stage 4: `getNurseDashboardForUser` closes the gap Phase 1
+  Stage 6 explicitly left open ("no dashboard specified in the
+  original brief" was true then). Scoped by `departmentId` rather than
+  `doctorId`, reusing the same scoping the `NURSE` branch of
+  `listAppointmentsForUser` already proved correct back in Phase 1
+  Stage 4.
+- Recurring discovery across Stages 2 and 4 of this phase (worth
+  calling out once, since it hit twice): a test or live-check fixture
+  that creates a `DOCTOR`/`NURSE` user via `doctorProfile`/
+  `nurseProfile` alone, without also assigning the matching `Role` row
+  the way `actions/staff.ts` actually does at account creation, ends
+  up with a session that has no roles at all once anything queries the
+  database's `UserRole` table directly (the messaging staff list in
+  Stage 2) or once the role check runs against real session data
+  instead of a hand-constructed `SessionUser` (the live dashboard check
+  in Stage 4). Not an application bug either time -- both times the
+  fixture just hadn't mirrored how a real staff account actually gets
+  created.
+
+Phase 3 is now complete (Stages 1-4).
