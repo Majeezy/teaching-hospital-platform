@@ -30,6 +30,7 @@ const PROTECTED_PREFIXES = [
   "/activities",
   "/logbook",
   "/competencies",
+  "/messages",
 ];
 
 const ROLE_RESTRICTED_PREFIXES: { prefix: string; roles: RoleName[] }[] = [
@@ -79,5 +80,6 @@ export const config = {
     "/activities/:path*",
     "/logbook/:path*",
     "/competencies/:path*",
+    "/messages/:path*",
   ],
 };
