@@ -379,7 +379,7 @@ education platform on top of a foundation that's already correct.
 | **1 — Hospital core** | See the Stage 1–6 breakdown below. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
 | **2 — Education platform** | See the Stage 1–6 breakdown below. |
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
-| **4 — Harden & ship** | Full security review → E2E tests → UI/UX polish → deployment → finish docs (README/ERD/setup guide kept current throughout, not written cold at the end). |
+| **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. |
 
 ### Phase 1 breakdown
 
@@ -474,6 +474,46 @@ Two scope decisions made explicit before starting:
 | 2 | Internal messaging: `actions/messages.ts` — a relationship-scoped recipient picker (per the decision above), send, inbox, sent, mark-read. `/messages` page (inbox/sent) + compose dialog + an unread badge on the nav item. |
 | 3 | Search: a single topbar search input fanning out to a handful of entities (patients, doctors, students, appointments), each query reusing the exact same authorization scoping its existing list action already enforces (a nurse's search for "patients" can't surface more than their own department already shows on `/admin/patients` — there is no new unscoped "search everything" path). Results grouped by type, linking to the existing detail/list pages. |
 | 4 | Dashboard polish: a real Nurse dashboard (department-scoped today's/upcoming appointments, reusing the existing `NURSE` branch of `listAppointmentsForUser`'s scoping) — closing the gap Phase 1 Stage 6 explicitly left open ("no dashboard specified in the original brief" was true then; nothing else in this phase needs it, so it's picked up here instead of invented mid-Phase-1). |
+
+### Phase 4 breakdown
+
+Like Phase 3, these six stages are independent concerns rather than a
+dependency chain, sequenced roughly build-time-first (fix/add
+functionality) before ship-time (verify deployment, finish docs) —
+docs genuinely come last here, since this is the one phase whose own
+job is to leave the README/architecture doc in their final state, not
+because they were neglected earlier.
+
+One gap found while scoping this phase, plus a decision made explicit
+before starting:
+
+- The original brief listed **password reset** under Identity & access
+  (Section 1), but it was never built in Phases 0-3. No email provider
+  has been chosen anywhere in this project — the same reason
+  notifications (Phase 3 Stage 1) and `Document` file uploads (Phase 1
+  Stage 5) both stayed deferred — and self-service reset normally
+  needs email to verify identity without one. **Decided with the user:**
+  an admin-assisted reset (admin sets a new password for a user,
+  communicated out-of-band), consistent with how staff/student
+  accounts are already admin-provisioned rather than self-service,
+  rather than introducing an email provider this late or dropping the
+  requirement silently.
+- **Confirmed with the user:** the GitHub repo is already connected to
+  a live Vercel project, auto-deploying on every push to main. Stage 5
+  (deployment) is therefore a hardening/verification pass against that
+  existing pipeline, not initial setup — and it's real work, not just
+  a checklist: `package.json`'s `build` script is currently plain
+  `next build` with no `prisma migrate deploy` step, and
+  `next.config.ts` sets no security headers at all yet.
+
+| Stage | Contents |
+|---|---|
+| 1 | Admin-assisted password reset: an admin can set a new password for any user, following the eligibility/audit pattern already used for `deactivateUser` — closes the Identity & access gap above without a new external dependency. |
+| 2 | Security review & hardening: a systematic re-audit of every authorization boundary accumulated across Phases 0-3 (role checks, ownership/relationship checks, IDOR potential on every `[id]` route and action), plus `next.config.ts` security headers (CSP, `X-Frame-Options`, `Referrer-Policy`, HSTS) and a secrets/env-hygiene pass (`.env.example` completeness, `NEXTAUTH_SECRET` strength). |
+| 3 | E2E tests: install and configure Playwright (not yet a real dependency despite being named in the tech stack), covering critical user journeys end-to-end through actual rendered pages rather than direct action calls — login, a patient booking and a doctor completing an appointment with clinical records, a supervisor assigning shadowing through to a student's reflection and feedback, admin account provisioning. |
+| 4 | UI/UX polish: a real mobile navigation (the `Sidebar` is currently `hidden` below the `md` breakpoint with no replacement at all — a genuine gap, not polish-level nitpicking), an accessibility pass (keyboard navigation, ARIA labels, focus states, contrast), and consistent empty/loading states and error/404 pages across pages that have drifted stage-to-stage. |
+| 5 | Deployment hardening: wire `prisma migrate deploy` into the production build step, apply the Stage 2 security headers, confirm production environment variables against `.env.example`, and smoke-test the live deployment end-to-end once Stages 1-4 have shipped. |
+| 6 | Finish docs: a final top-to-bottom accuracy pass on README/architecture.md/ERD (not a rewrite — both have been kept current stage-by-stage throughout), plus an explicit "known limitations" section listing every deliberate scope cut made along the way (admin-only password reset, no file uploads, in-app-only notifications, etc.) so a reviewer sees them as decisions, not gaps. |
 
 ## Summary: deviations from the original brief
 
