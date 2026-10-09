@@ -1,6 +1,7 @@
 import type { RoleName } from "@prisma/client";
 import {
   Building2,
+  Calendar,
   LayoutDashboard,
   Stethoscope,
   User,
@@ -18,6 +19,7 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/appointments", label: "Appointments", icon: Calendar },
   {
     href: "/admin/departments",
     label: "Departments",
