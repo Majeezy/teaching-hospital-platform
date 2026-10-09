@@ -562,3 +562,17 @@ Two scope decisions made explicit before starting:
   new and hadn't had the same filter added yet.
 
 Phase 2 is now complete (Stages 1-6).
+
+- Phase 3 Stage 1: `markNotificationReadForUser` uses `updateMany`
+  scoped to `{ id, userId: user.id }`, not `update` on the id alone --
+  marking someone else's notification read fails as a silent no-op
+  rather than a thrown error that would confirm whether that
+  notification id exists at all. Same "don't leak existence" instinct
+  as `appointments.ts`/`activities` using `notFound()` for both
+  "doesn't exist" and "exists but forbidden," applied to a write
+  instead of a read.
+- Phase 3 Stage 1: notifications are in-app only -- no email provider
+  has been chosen anywhere in this project, the same reason `Document`
+  file uploads stayed deferred in Phase 1 Stage 5. `notify()` mirrors
+  `audit()`: a single helper called from inside the action that causes
+  the event, not a generic event bus.
