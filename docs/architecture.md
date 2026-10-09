@@ -484,3 +484,23 @@ can't track competencies before an assessment exists to track).
   doctor's view of an appointment shows a real prescription; the
   shadowing student's view of the same appointment shows the note and
   diagnosis but has no prescription section at all.
+- Phase 2 Stage 4: added `LearningActivity.supervisorId` (migration
+  `20261009073255_learning_activity_supervisor`), not in the original
+  Phase 0 schema. That schema only recorded `studentId` on the activity,
+  with no field recording which supervisor assigned it -- a student can
+  have more than one supervisor over time across sequential placements,
+  so "the student's current supervisor" isn't a safe stand-in for "the
+  doctor who actually assigned this activity." Fixed with an additive
+  migration rather than inferring it, since the table was still empty
+  (feature unbuilt) and inference would have silently misattributed
+  activities the moment a student changed supervisors.
+- Phase 2 Stage 4: the activity status machine (`ASSIGNED` →
+  `IN_PROGRESS` → `COMPLETED` → `REVIEWED`) is enforced by tying each
+  transition to the action that causes it, not as a free-standing status
+  update: `COMPLETED` only happens as part of creating the
+  `StudentReflection` (same transaction), and `REVIEWED` only happens as
+  part of creating the `Feedback` row (same transaction). This mirrors
+  the existing `Appointment.status` transition-table pattern from Phase 1
+  Stage 4, but here the transition is inseparable from the record that
+  justifies it -- there's no code path that marks an activity reviewed
+  without an actual `Feedback` row to show for it.
