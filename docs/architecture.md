@@ -377,7 +377,7 @@ education platform on top of a foundation that's already correct.
 |---|---|
 | **0 — Foundations** | Project setup → database schema → authentication → core RBAC (incl. the audit-log helper, built now rather than at the old stage 19). |
 | **1 — Hospital core** | See the Stage 1–6 breakdown below. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
-| **2 — Education platform** | Students → placements → shadowing → learning activities → logbook → competencies → supervisor feedback → Student dashboard. |
+| **2 — Education platform** | See the Stage 1–6 breakdown below. |
 | **3 — Cross-cutting** | Notifications → search → remaining dashboard polish. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Full security review → E2E tests → UI/UX polish → deployment → finish docs (README/ERD/setup guide kept current throughout, not written cold at the end). |
 
@@ -426,6 +426,22 @@ against the token's embedded `roles` claim, redirecting to `/dashboard`
 on mismatch before Cache Components' rendering ever starts. The pattern
 holds: proxy catches the common cases cheaply and early; `lib/permissions.ts`
 remains the authoritative, DB-fresh backstop for everything else.
+
+### Phase 2 breakdown
+
+Same approach as Phase 1: each stage is a real demoable increment,
+sequenced so later stages never depend on data a prior stage hasn't
+created yet (can't shadow an appointment before a placement exists;
+can't track competencies before an assessment exists to track).
+
+| Stage | Contents |
+|---|---|
+| 1 | Student management: admin creates Student accounts (student number, university, year, program) — same pattern as Phase 1 Stage 2's Doctor/Nurse creation. Bootstrapping stage; nothing else in Phase 2 is demoable without a real student. |
+| 2 | Clinical placements: admin assigns a student to a department + a supervising doctor (`canSupervise = true`, already collected at doctor creation in Phase 1 Stage 2) for a date range. Establishes the specific supervisor-student relationship shadowing depends on — not "any doctor who can supervise," only the one actually assigned. |
+| 3 | Shadowing: a supervisor assigns a placed student to shadow a specific appointment (`ShadowingAssignment`). Extends the Phase 1 Stage 5 appointment/clinical-record access checks with a new case: a student with an active shadowing assignment for an appointment gets **read access to `ClinicalNote` and `Diagnosis` only** — not `Prescription` or `TestResult`. Decided explicitly (not a default): the original brief was emphatic that shadowing access must be scoped, not full record parity, and notes/diagnosis carry the observational/educational value without the more sensitive treatment specifics. |
+| 4 | Learning activities, reflections & feedback: supervisor assigns activities (optionally tied to a shadowing session); student completes them and submits a `StudentReflection`; supervisor reviews and records `Feedback` (rating, strengths, areas for improvement). |
+| 5 | Clinical logbook & competency tracking: a `ClinicalLogbookEntry` is created automatically when a shadowed appointment transitions to `COMPLETED` — tied to a real event, not manual entry, matching the brief's "calculated from database records, not fake numbers." Supervisors record `CompetencyAssessment`s against the catalog seeded in Phase 0 (Communication, Patient History Taking, Clinical Observation, Professional Conduct); students see progress derived from assessment history. |
+| 6 | Student dashboard: today's activities, upcoming shadowing, clinical hours, competency progress, pending reflections, current placement — aggregating Stages 1–5, same "dashboards last" reasoning as Phase 1 Stage 6. The existing Doctor dashboard (Phase 1 Stage 6) gets extended with a "my students" section for supervisors rather than building a separate supervisor portal. |
 
 ## Summary: deviations from the original brief
 
