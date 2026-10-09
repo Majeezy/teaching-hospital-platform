@@ -468,3 +468,19 @@ can't track competencies before an assessment exists to track).
   records, in full" rather than field-level redaction — nothing else in
   the data model has per-field visibility flags, and adding one would be
   speculative scope beyond what's actually specified anywhere.
+- Phase 2 Stage 3: building shadowing access surfaced that
+  `listAppointmentsForUser` had no `STUDENT` branch at all — students got
+  `AuthorizationError` hitting `/appointments` regardless of any
+  shadowing assignment, a gap left over from Phase 1 Stage 4 before
+  students existed as a role that needed appointment access. Fixed by
+  adding a branch scoped to appointments with an active
+  `ShadowingAssignment` for that student, consistent with every other
+  role's scoping in that function.
+- Phase 2 Stage 3: the notes-and-diagnosis-only scoping for shadowing
+  students is enforced in `getAppointmentRecordsForUser` by skipping the
+  `Prescription`/`TestOrder` queries entirely for that case (returning
+  `[]` without ever running them), not by querying everything and
+  filtering the response. Confirmed live against the dev database: a
+  doctor's view of an appointment shows a real prescription; the
+  shadowing student's view of the same appointment shows the note and
+  diagnosis but has no prescription section at all.
