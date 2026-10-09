@@ -70,12 +70,10 @@ export async function getAppointmentRecordsForUser(
 ) {
   // Reuses the exact same access rule as the appointment itself --
   // record visibility never diverges from appointment visibility.
-  const { appointment, canEdit } = await getAppointmentForUser(
-    user,
-    appointmentId,
-  );
+  const { appointment, canEdit, isShadowingStudent } =
+    await getAppointmentForUser(user, appointmentId);
 
-  const [notes, diagnoses, prescriptions, testOrders] = await Promise.all([
+  const [notes, diagnoses] = await Promise.all([
     prisma.clinicalNote.findMany({
       where: { appointmentId },
       include: authorInclude,
@@ -86,19 +84,36 @@ export async function getAppointmentRecordsForUser(
       include: authorInclude,
       orderBy: { createdAt: "desc" },
     }),
-    prisma.prescription.findMany({
-      where: { appointmentId },
-      include: authorInclude,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.testOrder.findMany({
-      where: { appointmentId },
-      include: { ...authorInclude, result: true },
-      orderBy: { orderedAt: "desc" },
-    }),
   ]);
 
-  return { appointment, canEdit, notes, diagnoses, prescriptions, testOrders };
+  // A shadowing student gets notes + diagnosis only, per the explicit
+  // scoping decision in docs/architecture.md -- prescriptions and test
+  // results are never even queried for this case, not just hidden in the
+  // UI, so there's nothing to leak if a later change forgets to filter.
+  const [prescriptions, testOrders] = isShadowingStudent
+    ? [[], []]
+    : await Promise.all([
+        prisma.prescription.findMany({
+          where: { appointmentId },
+          include: authorInclude,
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.testOrder.findMany({
+          where: { appointmentId },
+          include: { ...authorInclude, result: true },
+          orderBy: { orderedAt: "desc" },
+        }),
+      ]);
+
+  return {
+    appointment,
+    canEdit,
+    isShadowingStudent,
+    notes,
+    diagnoses,
+    prescriptions,
+    testOrders,
+  };
 }
 
 export async function addClinicalNoteForUser(
