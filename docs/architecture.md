@@ -587,3 +587,13 @@ Phase 2 is now complete (Stages 1-6).
   a doctor's own patients and own supervised students appear in
   *their* recipient list too, not invented as a one-way "only the
   patient can start it" rule.
+- Phase 3 Stage 3: search has no per-entity detail page to link to for
+  Patients/Staff/Students/Doctors (only Appointments has one) -- those
+  categories link to the existing list page (`/admin/patients`, etc.)
+  instead, since no detail route exists anywhere in the app for those
+  entities yet. "Doctors" as a search category only applies to a
+  patient's view (the existing booking list from
+  `listDoctorsForBookingForUser`); for admin, doctors surface under
+  the same "Staff" category the admin staff page already groups them
+  under, rather than inventing a separate admin-only "Doctors" split
+  that doesn't exist anywhere else in the UI.
