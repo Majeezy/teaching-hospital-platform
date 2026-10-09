@@ -4,6 +4,7 @@ import {
   Calendar,
   GraduationCap,
   LayoutDashboard,
+  Route,
   Stethoscope,
   User,
   UserRound,
@@ -21,6 +22,12 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/appointments", label: "Appointments", icon: Calendar },
+  {
+    href: "/placements",
+    label: "Placements",
+    icon: Route,
+    roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN", "DOCTOR", "STUDENT"],
+  },
   {
     href: "/admin/departments",
     label: "Departments",
