@@ -3,9 +3,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getAppointmentRecords } from "@/actions/clinical-records";
+import {
+  listShadowableStudents,
+  listShadowingForAppointment,
+} from "@/actions/shadowing";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_VARIANT } from "@/lib/appointment-status";
 import { ClinicalRecordsPanel } from "@/components/appointments/ClinicalRecordsPanel";
+import { ShadowingPanel } from "@/components/appointments/ShadowingPanel";
 
 export default function AppointmentDetailPage(
   props: PageProps<"/appointments/[appointmentId]">,
@@ -31,11 +36,21 @@ async function AppointmentDetailContent({
   const {
     appointment,
     canEdit,
+    isShadowingStudent,
     notes,
     diagnoses,
     prescriptions,
     testOrders,
   } = data;
+
+  // listShadowableStudents only succeeds for the assigned, supervising
+  // doctor -- its own failure is how we know whether to show the "assign"
+  // control, rather than duplicating that eligibility check here.
+  const [shadowingAssignments, shadowableStudents] = await Promise.all([
+    listShadowingForAppointment(appointmentId),
+    listShadowableStudents(appointmentId).catch(() => null),
+  ]);
+  const canManageShadowing = shadowableStudents !== null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,6 +71,9 @@ async function AppointmentDetailContent({
           <Badge variant={STATUS_VARIANT[appointment.status]}>
             {appointment.status.replace("_", " ")}
           </Badge>
+          {isShadowingStudent && (
+            <Badge variant="outline">Shadowing — read-only</Badge>
+          )}
         </div>
         <p className="mt-1 text-sm text-zinc-500">
           {appointment.department.name} —{" "}
@@ -66,9 +84,19 @@ async function AppointmentDetailContent({
         )}
       </div>
 
+      {(canManageShadowing || shadowingAssignments.length > 0) && (
+        <ShadowingPanel
+          appointmentId={appointment.id}
+          canAssign={canManageShadowing}
+          assignments={shadowingAssignments}
+          shadowableStudents={shadowableStudents ?? []}
+        />
+      )}
+
       <ClinicalRecordsPanel
         appointmentId={appointment.id}
         canEdit={canEdit}
+        hidePrescriptionsAndTests={isShadowingStudent}
         notes={notes}
         diagnoses={diagnoses}
         prescriptions={prescriptions}

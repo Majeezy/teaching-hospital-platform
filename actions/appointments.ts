@@ -87,15 +87,32 @@ export async function listAppointmentsForUser(user: SessionUser) {
     });
   }
 
+  if (hasRole(user, "STUDENT")) {
+    const studentProfile = await prisma.studentProfile.findUniqueOrThrow({
+      where: { userId: user.id },
+    });
+    return prisma.appointment.findMany({
+      where: { shadowing: { some: { studentId: studentProfile.id } } },
+      orderBy: { scheduledAt: "desc" },
+      include: appointmentInclude,
+    });
+  }
+
   throw new AuthorizationError("Your role does not have access to appointments.");
 }
 
 /**
  * Single-appointment fetch with the same access rule as the list: admin
- * (oversight), the assigned doctor, a nurse in the same department, or the
- * owning patient. Used directly by the appointment detail page, and by
+ * (oversight), the assigned doctor, a nurse in the same department, the
+ * owning patient, or a student with an active shadowing assignment for
+ * this appointment. Used directly by the appointment detail page, and by
  * actions/clinical-records.ts so record access follows the exact same
  * rule as appointment access, in one place, rather than reimplemented.
+ *
+ * `isShadowingStudent` is also returned so clinical-records.ts can scope
+ * *what* a shadowing student sees (notes + diagnosis only, not
+ * prescriptions/test results) -- the brief was explicit that shadowing
+ * access must be scoped, not full record parity.
  */
 export async function getAppointmentForUser(
   user: SessionUser,
@@ -120,11 +137,35 @@ export async function getAppointmentForUser(
     deptNurse = nurseProfile?.departmentId === appointment.departmentId;
   }
 
-  if (!isAdmin && !assignedDoctor && !owningPatient && !deptNurse) {
+  let isShadowingStudent = false;
+  if (hasRole(user, "STUDENT")) {
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (studentProfile) {
+      const assignment = await prisma.shadowingAssignment.findUnique({
+        where: {
+          appointmentId_studentId: {
+            appointmentId: appointment.id,
+            studentId: studentProfile.id,
+          },
+        },
+      });
+      isShadowingStudent = !!assignment;
+    }
+  }
+
+  if (
+    !isAdmin &&
+    !assignedDoctor &&
+    !owningPatient &&
+    !deptNurse &&
+    !isShadowingStudent
+  ) {
     throw new AuthorizationError("You don't have access to this appointment.");
   }
 
-  return { appointment, canEdit: assignedDoctor };
+  return { appointment, canEdit: assignedDoctor, isShadowingStudent };
 }
 
 export async function listDoctorsForBookingForUser(user: SessionUser) {

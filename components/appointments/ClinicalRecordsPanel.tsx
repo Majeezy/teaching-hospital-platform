@@ -30,6 +30,7 @@ type Records = Awaited<ReturnType<typeof getAppointmentRecordsForUser>>;
 export function ClinicalRecordsPanel({
   appointmentId,
   canEdit,
+  hidePrescriptionsAndTests,
   notes,
   diagnoses,
   prescriptions,
@@ -37,6 +38,7 @@ export function ClinicalRecordsPanel({
 }: {
   appointmentId: string;
   canEdit: boolean;
+  hidePrescriptionsAndTests: boolean;
 } & Pick<Records, "notes" | "diagnoses" | "prescriptions" | "testOrders">) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -50,16 +52,25 @@ export function ClinicalRecordsPanel({
         canEdit={canEdit}
         diagnoses={diagnoses}
       />
-      <PrescriptionsSection
-        appointmentId={appointmentId}
-        canEdit={canEdit}
-        prescriptions={prescriptions}
-      />
-      <TestsSection
-        appointmentId={appointmentId}
-        canEdit={canEdit}
-        testOrders={testOrders}
-      />
+      {/* A shadowing student's prescriptions/testOrders are already [] from
+          the server (clinical-records.ts never queries them), but we also
+          skip rendering the section itself here rather than showing a
+          misleading "Nothing recorded yet" for data the student simply
+          isn't allowed to see. */}
+      {!hidePrescriptionsAndTests && (
+        <>
+          <PrescriptionsSection
+            appointmentId={appointmentId}
+            canEdit={canEdit}
+            prescriptions={prescriptions}
+          />
+          <TestsSection
+            appointmentId={appointmentId}
+            canEdit={canEdit}
+            testOrders={testOrders}
+          />
+        </>
+      )}
     </div>
   );
 }
