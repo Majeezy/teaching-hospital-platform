@@ -1,10 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { AppointmentStatus, RoleName } from "@prisma/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -18,20 +19,9 @@ import {
   updateAppointmentStatus,
   type listAppointmentsForUser,
 } from "@/actions/appointments";
+import { STATUS_VARIANT } from "@/lib/appointment-status";
 
 type Appointment = Awaited<ReturnType<typeof listAppointmentsForUser>>[number];
-
-const STATUS_VARIANT: Record<
-  AppointmentStatus,
-  "secondary" | "default" | "destructive" | "outline"
-> = {
-  SCHEDULED: "outline",
-  CONFIRMED: "secondary",
-  IN_PROGRESS: "default",
-  COMPLETED: "secondary",
-  CANCELLED: "destructive",
-  NO_SHOW: "destructive",
-};
 
 type Action = {
   label: string;
@@ -155,6 +145,15 @@ export function AppointmentsTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
+                    <Link
+                      href={`/appointments/${appointment.id}`}
+                      className={buttonVariants({
+                        variant: "ghost",
+                        size: "sm",
+                      })}
+                    >
+                      View
+                    </Link>
                     {actions.map((action) => (
                       <Button
                         key={action.nextStatus}
