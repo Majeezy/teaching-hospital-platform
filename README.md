@@ -9,7 +9,7 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 3 (Cross-cutting), Stage 2.
+**Status:** 🚧 In active development — Phase 3 (Cross-cutting), Stage 3.
 
 ## Database
 
@@ -96,7 +96,7 @@ another user?"), which a mocked Prisma client can't meaningfully verify.
 - [x] Phase 2, Stage 6 — Student dashboard
 - [x] Phase 3, Stage 1 — Notifications
 - [x] Phase 3, Stage 2 — Internal messaging
-- [ ] Phase 3, Stage 3 — Search
+- [x] Phase 3, Stage 3 — Search
 - [ ] Phase 3, Stage 4 — Dashboard polish (Nurse dashboard)
 - [ ] Phase 4 — Harden & ship (security review, E2E tests, polish, deploy, docs)
 
