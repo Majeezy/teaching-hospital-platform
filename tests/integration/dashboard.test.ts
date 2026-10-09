@@ -4,6 +4,7 @@ import { hashPassword } from "@/lib/password";
 import {
   getAdminDashboardForUser,
   getDoctorDashboardForUser,
+  getNurseDashboardForUser,
   getPatientDashboardForUser,
 } from "@/actions/dashboard";
 import { requestAppointmentForUser } from "@/actions/appointments";
@@ -16,15 +17,19 @@ describe("dashboards (real database)", () => {
   let doctorUserId: string;
   let doctorProfileId: string;
   let appointmentId: string;
+  let nurseUserId: string;
+  let otherDeptDoctorUserId: string;
+  let otherDeptAppointmentId: string;
   const allUserIds: string[] = [];
 
   beforeAll(async () => {
-    const [passwordHash, department, patientRole] = await Promise.all([
+    const [passwordHash, departments, patientRole] = await Promise.all([
       hashPassword("test-password-123"),
-      prisma.department.findFirstOrThrow(),
+      prisma.department.findMany({ take: 2 }),
       prisma.role.findUniqueOrThrow({ where: { name: "PATIENT" } }),
     ]);
     const stamp = Date.now();
+    const [department, otherDepartment] = departments;
     const departmentId = department.id;
 
     const [admin, patient, doctor] = await Promise.all([
@@ -74,10 +79,47 @@ describe("dashboards (real database)", () => {
       scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
     appointmentId = appointment.id;
+
+    const [nurse, otherDeptDoctor] = await Promise.all([
+      prisma.user.create({
+        data: {
+          name: "Test Nurse",
+          email: `test-dash-nurse-${stamp}@example.com`,
+          passwordHash,
+          nurseProfile: { create: { departmentId } },
+        },
+      }),
+      prisma.user.create({
+        data: {
+          name: "Other Dept Doctor",
+          email: `test-dash-other-doctor-${stamp}@example.com`,
+          passwordHash,
+          doctorProfile: {
+            create: {
+              departmentId: otherDepartment.id,
+              specialization: "General",
+              licenseNumber: `LIC-DASH-OTHER-${stamp}`,
+            },
+          },
+        },
+        include: { doctorProfile: true },
+      }),
+    ]);
+    nurseUserId = nurse.id;
+    otherDeptDoctorUserId = otherDeptDoctor.id;
+    allUserIds.push(nurseUserId, otherDeptDoctorUserId);
+
+    const otherDeptAppointment = await requestAppointmentForUser(asPatient(), {
+      doctorId: otherDeptDoctor.doctorProfile!.id,
+      scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+    otherDeptAppointmentId = otherDeptAppointment.id;
   });
 
   afterAll(async () => {
-    await prisma.appointment.deleteMany({ where: { id: appointmentId } });
+    await prisma.appointment.deleteMany({
+      where: { id: { in: [appointmentId, otherDeptAppointmentId] } },
+    });
     await prisma.auditLog.deleteMany({
       where: { actorId: { in: allUserIds } },
     });
@@ -110,6 +152,16 @@ describe("dashboards (real database)", () => {
       name: "Test Doctor",
       email: "doctor@test",
       roles: ["DOCTOR"],
+      isActive: true,
+    };
+  }
+
+  function asNurse(): SessionUser {
+    return {
+      id: nurseUserId,
+      name: "Test Nurse",
+      email: "nurse@test",
+      roles: ["NURSE"],
       isActive: true,
     };
   }
@@ -165,5 +217,24 @@ describe("dashboards (real database)", () => {
       data.upcomingAppointments.some((a) => a.id === appointmentId),
     ).toBe(true);
     expect(data.patientProfile.id).toBe(patientProfileId);
+  });
+
+  it("rejects non-nurses from the nurse dashboard", async () => {
+    await expect(getNurseDashboardForUser(asPatient())).rejects.toThrow(
+      AuthorizationError,
+    );
+    await expect(getNurseDashboardForUser(asDoctor())).rejects.toThrow(
+      AuthorizationError,
+    );
+  });
+
+  it("nurse dashboard shows only this nurse's own department's upcoming appointment, not the other department's", async () => {
+    const data = await getNurseDashboardForUser(asNurse());
+    expect(
+      data.upcomingAppointments.some((a) => a.id === appointmentId),
+    ).toBe(true);
+    expect(
+      data.upcomingAppointments.some((a) => a.id === otherDeptAppointmentId),
+    ).toBe(false);
   });
 });

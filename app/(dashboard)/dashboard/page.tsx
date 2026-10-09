@@ -3,11 +3,13 @@ import { getSessionUser } from "@/lib/permissions";
 import {
   getAdminDashboard,
   getDoctorDashboard,
+  getNurseDashboard,
   getPatientDashboard,
   getStudentDashboard,
 } from "@/actions/dashboard";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { DoctorDashboard } from "@/components/dashboard/DoctorDashboard";
+import { NurseDashboard } from "@/components/dashboard/NurseDashboard";
 import { PatientDashboard } from "@/components/dashboard/PatientDashboard";
 import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,9 +27,8 @@ async function DashboardContent() {
   if (!user) return null; // layout already redirects; satisfies types here
 
   // Priority order for accounts that could hold more than one role: admin
-  // first, then clinical staff, then patient, then student. Nurse (and
-  // anyone with no dashboard-eligible role) falls through to the generic
-  // summary below.
+  // first, then clinical staff, then patient, then student. Anyone with
+  // no dashboard-eligible role falls through to the generic summary below.
   if (user.roles.includes("HOSPITAL_ADMIN") || user.roles.includes("SYSTEM_ADMIN")) {
     const data = await getAdminDashboard();
     return <DashboardShell user={user}><AdminDashboard data={data} /></DashboardShell>;
@@ -36,6 +37,11 @@ async function DashboardContent() {
   if (user.roles.includes("DOCTOR")) {
     const data = await getDoctorDashboard();
     return <DashboardShell user={user}><DoctorDashboard data={data} /></DashboardShell>;
+  }
+
+  if (user.roles.includes("NURSE")) {
+    const data = await getNurseDashboard();
+    return <DashboardShell user={user}><NurseDashboard data={data} /></DashboardShell>;
   }
 
   if (user.roles.includes("PATIENT")) {

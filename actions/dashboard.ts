@@ -166,6 +166,51 @@ export async function getPatientDashboardForUser(user: SessionUser) {
   return { patientProfile, upcomingAppointments, pastAppointments };
 }
 
+export async function getNurseDashboardForUser(user: SessionUser) {
+  requireRole(user, "NURSE");
+  const nurseProfile = await prisma.nurseProfile.findUniqueOrThrow({
+    where: { userId: user.id },
+  });
+
+  const appointmentWithPatientAndDoctor = {
+    ...appointmentWithPatient,
+    ...appointmentWithDoctor,
+  } as const;
+
+  const [todaysAppointments, upcomingAppointments, recentCompleted] =
+    await Promise.all([
+      prisma.appointment.findMany({
+        where: {
+          departmentId: nurseProfile.departmentId,
+          scheduledAt: { gte: startOfToday(), lte: endOfToday() },
+        },
+        orderBy: { scheduledAt: "asc" },
+        include: appointmentWithPatientAndDoctor,
+      }),
+      prisma.appointment.findMany({
+        where: {
+          departmentId: nurseProfile.departmentId,
+          scheduledAt: { gt: endOfToday() },
+          status: { notIn: ["CANCELLED"] },
+        },
+        orderBy: { scheduledAt: "asc" },
+        take: 5,
+        include: appointmentWithPatientAndDoctor,
+      }),
+      prisma.appointment.findMany({
+        where: {
+          departmentId: nurseProfile.departmentId,
+          status: "COMPLETED",
+        },
+        orderBy: { scheduledAt: "desc" },
+        take: 5,
+        include: appointmentWithPatientAndDoctor,
+      }),
+    ]);
+
+  return { todaysAppointments, upcomingAppointments, recentCompleted };
+}
+
 export async function getStudentDashboardForUser(user: SessionUser) {
   requireRole(user, "STUDENT");
   const studentProfile = await prisma.studentProfile.findUniqueOrThrow({
@@ -270,4 +315,9 @@ export async function getPatientDashboard() {
 export async function getStudentDashboard() {
   const user = await requireUser();
   return getStudentDashboardForUser(user);
+}
+
+export async function getNurseDashboard() {
+  const user = await requireUser();
+  return getNurseDashboardForUser(user);
 }
