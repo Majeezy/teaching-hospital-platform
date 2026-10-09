@@ -6,7 +6,13 @@ import type { RoleName } from "@prisma/client";
 import { navItemsForRoles } from "@/components/dashboard/nav-items";
 import { cn } from "@/lib/utils";
 
-export function Sidebar({ roles }: { roles: RoleName[] }) {
+export function Sidebar({
+  roles,
+  unreadMessageCount,
+}: {
+  roles: RoleName[];
+  unreadMessageCount: number;
+}) {
   const pathname = usePathname();
   const items = navItemsForRoles(roles);
 
@@ -32,6 +38,11 @@ export function Sidebar({ roles }: { roles: RoleName[] }) {
             >
               <item.icon size={16} />
               {item.label}
+              {item.href === "/messages" && unreadMessageCount > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                </span>
+              )}
             </Link>
           );
         })}

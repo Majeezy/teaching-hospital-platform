@@ -5,6 +5,7 @@ import {
   getUnreadNotificationCount,
   listNotifications,
 } from "@/actions/notifications";
+import { getUnreadMessageCount } from "@/actions/messages";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
 
@@ -31,14 +32,15 @@ async function DashboardShell({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const [notifications, unreadCount] = await Promise.all([
+  const [notifications, unreadCount, unreadMessageCount] = await Promise.all([
     listNotifications(),
     getUnreadNotificationCount(),
+    getUnreadMessageCount(),
   ]);
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar roles={user.roles} />
+      <Sidebar roles={user.roles} unreadMessageCount={unreadMessageCount} />
       <div className="flex flex-1 flex-col">
         <Topbar
           name={user.name}

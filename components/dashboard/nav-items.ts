@@ -6,6 +6,7 @@ import {
   Calendar,
   GraduationCap,
   LayoutDashboard,
+  Mail,
   NotebookTabs,
   Route,
   Stethoscope,
@@ -37,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: BookOpen,
     roles: ["HOSPITAL_ADMIN", "SYSTEM_ADMIN", "DOCTOR", "STUDENT"],
   },
+  { href: "/messages", label: "Messages", icon: Mail },
   {
     href: "/logbook",
     label: "Logbook",
