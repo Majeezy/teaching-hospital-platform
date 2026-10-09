@@ -519,3 +519,14 @@ can't track competencies before an assessment exists to track).
   max -- consistent with how `LearningActivity.status` and
   `Appointment.status` are both "latest known state," not aggregates,
   everywhere else in this schema.
+- Phase 2 Stage 6: writing the dashboard test fixture surfaced that the
+  student dashboard's "upcoming shadowing" query filtered appointments
+  by `scheduledAt >= now` only, with no status check. Completing an
+  appointment doesn't rewrite its `scheduledAt`, so a completed
+  appointment with a future timestamp could still show up as
+  "upcoming." Fixed by excluding `CANCELLED`/`COMPLETED`/`NO_SHOW`,
+  mirroring how the doctor and patient dashboards' own "upcoming
+  appointments" queries already filter status -- this query was simply
+  new and hadn't had the same filter added yet.
+
+Phase 2 is now complete (Stages 1-6).
