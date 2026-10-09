@@ -11,6 +11,7 @@ import {
   type SessionUser,
 } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 
 const assignActivitySchema = z.object({
   studentId: z.string().min(1, "Select a student"),
@@ -159,6 +160,7 @@ export async function assignActivityForUser(
       relatedAppointmentId: data.relatedAppointmentId ?? null,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
     },
+    include: { student: { select: { userId: true } } },
   });
 
   await audit({
@@ -167,6 +169,13 @@ export async function assignActivityForUser(
     entityType: "LearningActivity",
     entityId: activity.id,
     metadata: { studentId: data.studentId },
+  });
+
+  await notify({
+    userId: activity.student.userId,
+    type: "ACTIVITY_ASSIGNED",
+    title: "New learning activity",
+    body: `"${activity.title}" has been assigned to you.`,
   });
 
   return activity;
@@ -218,6 +227,7 @@ export async function submitReflectionForUser(
 
   const activity = await prisma.learningActivity.findUniqueOrThrow({
     where: { id: data.learningActivityId },
+    include: { supervisor: { select: { userId: true } } },
   });
   if (activity.studentId !== studentProfile.id) {
     throw new AuthorizationError("This isn't your activity.");
@@ -248,6 +258,13 @@ export async function submitReflectionForUser(
     entityType: "StudentReflection",
     entityId: reflection.id,
     metadata: { learningActivityId: data.learningActivityId },
+  });
+
+  await notify({
+    userId: activity.supervisor.userId,
+    type: "REFLECTION_SUBMITTED",
+    title: "Reflection submitted",
+    body: `${user.name} submitted a reflection for "${activity.title}".`,
   });
 
   return reflection;
@@ -304,6 +321,13 @@ export async function giveFeedbackForUser(
     entityType: "Feedback",
     entityId: feedback.id,
     metadata: { learningActivityId: data.learningActivityId },
+  });
+
+  await notify({
+    userId: activity.student.userId,
+    type: "FEEDBACK_GIVEN",
+    title: "Feedback received",
+    body: `Your supervisor reviewed "${activity.title}".`,
   });
 
   return feedback;

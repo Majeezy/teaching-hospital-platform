@@ -11,6 +11,7 @@ import {
   type SessionUser,
 } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 
 const createPlacementSchema = z.object({
   studentId: z.string().min(1, "Select a student"),
@@ -110,9 +111,15 @@ export async function createPlacementForUser(
   // Re-validated server-side even though the UI only lists eligible
   // supervisors -- never trust that the client only submits what it was
   // shown.
-  const supervisor = await prisma.doctorProfile.findUniqueOrThrow({
-    where: { id: data.supervisorId },
-  });
+  const [supervisor, studentProfile] = await Promise.all([
+    prisma.doctorProfile.findUniqueOrThrow({
+      where: { id: data.supervisorId },
+    }),
+    prisma.studentProfile.findUniqueOrThrow({
+      where: { id: data.studentId },
+      select: { userId: true },
+    }),
+  ]);
   if (!supervisor.canSupervise) {
     throw new Error(
       "This doctor is not marked as able to supervise students.",
@@ -135,6 +142,21 @@ export async function createPlacementForUser(
     entityType: "StudentPlacement",
     entityId: placement.id,
   });
+
+  await Promise.all([
+    notify({
+      userId: studentProfile.userId,
+      type: "PLACEMENT_CREATED",
+      title: "New clinical placement",
+      body: `You've been placed under a new supervisor from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}.`,
+    }),
+    notify({
+      userId: supervisor.userId,
+      type: "PLACEMENT_CREATED",
+      title: "New student placed under you",
+      body: `A student has been placed under your supervision from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}.`,
+    }),
+  ]);
 
   return placement;
 }

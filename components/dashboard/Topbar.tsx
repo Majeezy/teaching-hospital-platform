@@ -11,14 +11,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { NotificationBell } from "@/components/dashboard/NotificationBell";
 import type { RoleName } from "@prisma/client";
+import type { listNotificationsForUser } from "@/actions/notifications";
 
 export function Topbar({
   name,
   roles,
+  notifications,
+  unreadCount,
 }: {
   name: string;
   roles: RoleName[];
+  notifications: Awaited<ReturnType<typeof listNotificationsForUser>>;
+  unreadCount: number;
 }) {
   return (
     <header className="flex h-14 items-center justify-between border-b px-4 md:px-6">
@@ -30,23 +36,27 @@ export function Topbar({
         ))}
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-medium outline-none">
-          <UserCircle size={20} />
-          {name}
-          <ChevronDown size={14} className="text-zinc-500" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{name}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            <LogOut size={14} />
-            Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 text-sm font-medium outline-none">
+            <UserCircle size={20} />
+            {name}
+            <ChevronDown size={14} className="text-zinc-500" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{name}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
+              <LogOut size={14} />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

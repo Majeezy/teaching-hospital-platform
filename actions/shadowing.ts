@@ -11,6 +11,7 @@ import {
   type SessionUser,
 } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 import { getAppointmentForUser, isAssignedDoctor } from "@/actions/appointments";
 
 const assignShadowingSchema = z.object({
@@ -112,6 +113,7 @@ export async function assignShadowingForUser(
       supervisorId: doctorProfile.id,
       status: "ACTIVE",
     },
+    include: { student: { select: { userId: true } } },
   });
   if (!placement) {
     throw new Error("This student does not have an active placement under you.");
@@ -139,6 +141,13 @@ export async function assignShadowingForUser(
     entityType: "ShadowingAssignment",
     entityId: assignment.id,
     metadata: { appointmentId: data.appointmentId, studentId: data.studentId },
+  });
+
+  await notify({
+    userId: placement.student.userId,
+    type: "SHADOWING_ASSIGNED",
+    title: "New shadowing assignment",
+    body: `You've been assigned to shadow an appointment on ${appointment.scheduledAt.toLocaleString()}.`,
   });
 
   return assignment;

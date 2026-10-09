@@ -12,6 +12,7 @@ import {
   type SessionUser,
 } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 
 const requestAppointmentSchema = z.object({
   doctorId: z.string().min(1, "Select a doctor"),
@@ -213,6 +214,13 @@ export async function requestAppointmentForUser(
     entityId: appointment.id,
   });
 
+  await notify({
+    userId: doctor.userId,
+    type: "APPOINTMENT_REQUESTED",
+    title: "New appointment request",
+    body: `${user.name} requested an appointment on ${scheduledAt.toLocaleString()}.`,
+  });
+
   return appointment;
 }
 
@@ -239,6 +247,10 @@ export async function updateAppointmentStatusForUser(
 ) {
   const appointment = await prisma.appointment.findUniqueOrThrow({
     where: { id: appointmentId },
+    include: {
+      patient: { select: { userId: true } },
+      doctor: { select: { userId: true } },
+    },
   });
 
   const allowedNext = ALLOWED_TRANSITIONS[appointment.status];
@@ -249,6 +261,11 @@ export async function updateAppointmentStatusForUser(
   }
 
   const isAdmin = hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"]);
+
+  // Tracked here, used after the transaction commits, to notify the
+  // doctor only when the *patient* was the one who cancelled -- not
+  // when the doctor or admin did it themselves.
+  let notifyDoctorOfPatientCancellation = false;
 
   if (newStatus === "CANCELLED") {
     // Cancellation can come from the admin, the assigned doctor, or the
@@ -263,6 +280,7 @@ export async function updateAppointmentStatusForUser(
         "You can only cancel your own appointment.",
       );
     }
+    notifyDoctorOfPatientCancellation = owningPatient;
   } else {
     const assignedDoctor = await isAssignedDoctor(user, appointment.doctorId);
     if (!isAdmin && !assignedDoctor) {
@@ -316,6 +334,24 @@ export async function updateAppointmentStatusForUser(
       loggedForStudentIds: shadowingStudents.map((s) => s.studentId),
     },
   });
+
+  if (newStatus === "CONFIRMED" || newStatus === "CANCELLED" || newStatus === "COMPLETED") {
+    await notify({
+      userId: appointment.patient.userId,
+      type: `APPOINTMENT_${newStatus}`,
+      title: `Appointment ${newStatus.toLowerCase()}`,
+      body: `Your appointment on ${appointment.scheduledAt.toLocaleString()} is now ${newStatus.toLowerCase()}.`,
+    });
+  }
+
+  if (notifyDoctorOfPatientCancellation) {
+    await notify({
+      userId: appointment.doctor.userId,
+      type: "APPOINTMENT_CANCELLED",
+      title: "Appointment cancelled by patient",
+      body: `The appointment on ${appointment.scheduledAt.toLocaleString()} was cancelled by the patient.`,
+    });
+  }
 
   return updated;
 }
