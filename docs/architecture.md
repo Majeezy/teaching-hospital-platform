@@ -393,7 +393,7 @@ increment rather than a horizontal layer:
 | 3 | Patient management: admin patient list; patient self-service profile (emergency contact, blood type, allergies — deliberately skipped at registration). Doctor/Nurse "my patients" scoping is *not* finished here — it's only meaningful once appointments exist. |
 | 4 | Appointments: booking (patient selects a doctor directly — see deviations), full status lifecycle, per-role list views. Establishes Doctor/Nurse patient scoping, since "assigned patients" is defined through appointments. |
 | 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by the assigned doctor during/after an appointment. Admin is read-only here (oversight, not edit — the one entity in this app where admin doesn't have full access). Patients see their own records in full; `Document` (file uploads) deferred — no storage provider chosen, nothing else in this phase needs one. |
-| 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. |
+| 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. Nurse (no dashboard specified in the original brief) falls through to a generic summary. |
 
 ### Route protection: proxy.ts + server-side checks, not either alone
 
