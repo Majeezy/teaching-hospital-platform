@@ -342,10 +342,14 @@ single stage after the threat model has been forgotten.
 
 **Booking → treatment**
 
-1. Patient requests an appointment in a department — status `Scheduled`.
-2. Hospital Admin/Doctor confirms, assigns doctor — status `Confirmed`.
+1. Patient selects a specific doctor and requests an appointment — status
+   `Scheduled`. (Implemented in Phase 1 Stage 4 as doctor-selection, not
+   department-only — `Appointment.doctorId` is a required FK from Phase 0,
+   so the doctor has to be known at creation time. Equally realistic;
+   see the Phase 1 Stage 4 note in the deviations summary.)
+2. Hospital Admin or the assigned doctor confirms — status `Confirmed`.
 3. Doctor runs the appointment — `In Progress` → adds notes/diagnosis/
-   prescription → `Completed`.
+   prescription (Stage 5) → `Completed`.
 4. Patient sees permitted record fields and any follow-up on their
    dashboard.
 
@@ -387,7 +391,7 @@ increment rather than a horizontal layer:
 | 1 | Dashboard shell (sidebar/topbar, role-aware nav) + shadcn/ui setup. First real feature: Department CRUD (admin-only) — proves the action → permission → audit → table → form pattern on the simplest possible domain object. |
 | 2 | Staff management: admin creates Doctor/Nurse accounts, views/deactivates staff. First real UI for Stage 0-4's `deactivateUser`. |
 | 3 | Patient management: admin patient list; patient self-service profile (emergency contact, blood type, allergies — deliberately skipped at registration). Doctor/Nurse "my patients" scoping is *not* finished here — it's only meaningful once appointments exist. |
-| 4 | Appointments: booking, full status lifecycle, per-role list views. Tightens Doctor/Nurse patient scoping from Stage 3, since "assigned patients" is defined through appointments. |
+| 4 | Appointments: booking (patient selects a doctor directly — see deviations), full status lifecycle, per-role list views. Establishes Doctor/Nurse patient scoping, since "assigned patients" is defined through appointments. |
 | 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by doctors during/after an appointment; patients see the permitted subset of their own. `Document` (file uploads) is deferred — no storage provider chosen, and nothing else in this phase needs one. |
 | 6 | Role dashboards (Admin/Doctor/Patient) with real data — deliberately last, since every widget aggregates data built in Stages 1–5 rather than querying empty tables. |
 
@@ -438,3 +442,8 @@ remains the authoritative, DB-fresh backstop for everything else.
   reversed in Stage 3 once implementation showed next-auth v4's Credentials
   provider never uses the adapter's database-session path regardless of
   config. Same revocability outcome, different mechanism (see Section 7).
+- Phase 1 Stage 4: patients select a specific doctor when booking, rather
+  than requesting a department and having staff assign a doctor later —
+  `Appointment.doctorId` is a required FK from the Phase 0 schema, so
+  deferred doctor assignment isn't possible without a migration. Doctor
+  selection is an equally realistic booking pattern; not changed.
