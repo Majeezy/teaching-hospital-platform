@@ -378,7 +378,7 @@ education platform on top of a foundation that's already correct.
 | **0 — Foundations** | Project setup → database schema → authentication → core RBAC (incl. the audit-log helper, built now rather than at the old stage 19). |
 | **1 — Hospital core** | See the Stage 1–6 breakdown below. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
 | **2 — Education platform** | See the Stage 1–6 breakdown below. |
-| **3 — Cross-cutting** | Notifications → search → remaining dashboard polish. (Audit logs already exist from Phase 0.) |
+| **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Full security review → E2E tests → UI/UX polish → deployment → finish docs (README/ERD/setup guide kept current throughout, not written cold at the end). |
 
 ### Phase 1 breakdown
@@ -442,6 +442,38 @@ can't track competencies before an assessment exists to track).
 | 4 | Learning activities, reflections & feedback: supervisor assigns activities (optionally tied to a shadowing session); student completes them and submits a `StudentReflection`; supervisor reviews and records `Feedback` (rating, strengths, areas for improvement). |
 | 5 | Clinical logbook & competency tracking: a `ClinicalLogbookEntry` is created automatically when a shadowed appointment transitions to `COMPLETED` — tied to a real event, not manual entry, matching the brief's "calculated from database records, not fake numbers." Supervisors record `CompetencyAssessment`s against the catalog seeded in Phase 0 (Communication, Patient History Taking, Clinical Observation, Professional Conduct); students see progress derived from assessment history. |
 | 6 | Student dashboard: today's activities, upcoming shadowing, clinical hours, competency progress, pending reflections, current placement — aggregating Stages 1–5, same "dashboards last" reasoning as Phase 1 Stage 6. The existing Doctor dashboard (Phase 1 Stage 6) gets extended with a "my students" section for supervisors rather than building a separate supervisor portal. |
+
+### Phase 3 breakdown
+
+Unlike Phases 1 and 2, these four stages aren't a dependency chain — each
+is an independent cross-cutting concern touching many existing modules
+rather than building new ones from scratch. Sequenced in the order the
+roadmap table already commits to (notifications → messaging → search →
+dashboard polish), but any could run in a different order without
+breaking the next.
+
+Two scope decisions made explicit before starting:
+
+- **No email delivery.** Notifications are in-app only (a `Notification`
+  row + a bell icon in the topbar), the same way `Document` file uploads
+  stayed deferred in Phase 1 Stage 5 — no email provider has been chosen
+  anywhere in this project, and adding one now, for this alone, would be
+  scope the brief never asked for.
+- **Messaging is relationship-scoped, not an open directory** (confirmed
+  with the user before starting): a patient can only message their own
+  assigned doctor(s); a student can only message their current/past
+  supervisor(s); doctors, nurses, and admins can message each other
+  freely as staff; admin can message anyone. This matches how every
+  other feature in this app is scoped by an actual relationship
+  (appointment, placement) rather than open access — an open directory
+  would be the first feature in the whole system that isn't.
+
+| Stage | Contents |
+|---|---|
+| 1 | Notifications: `lib/notifications.ts` (`notify()`, mirrors `lib/audit.ts`'s `audit()`) + `actions/notifications.ts` (list, unread count, mark-read/mark-all-read) + a bell icon with an unread badge and dropdown panel in the shared `Topbar`. Wired into real existing events, not invented ones: appointment requested (→ the assigned doctor), appointment confirmed/cancelled/completed (→ the patient, and → the doctor when the patient cancels), shadowing assigned (→ the student), learning activity assigned (→ the student), reflection submitted (→ the supervisor), feedback given (→ the student), competency assessed (→ the student), placement created (→ both student and supervisor). |
+| 2 | Internal messaging: `actions/messages.ts` — a relationship-scoped recipient picker (per the decision above), send, inbox, sent, mark-read. `/messages` page (inbox/sent) + compose dialog + an unread badge on the nav item. |
+| 3 | Search: a single topbar search input fanning out to a handful of entities (patients, doctors, students, appointments), each query reusing the exact same authorization scoping its existing list action already enforces (a nurse's search for "patients" can't surface more than their own department already shows on `/admin/patients` — there is no new unscoped "search everything" path). Results grouped by type, linking to the existing detail/list pages. |
+| 4 | Dashboard polish: a real Nurse dashboard (department-scoped today's/upcoming appointments, reusing the existing `NURSE` branch of `listAppointmentsForUser`'s scoping) — closing the gap Phase 1 Stage 6 explicitly left open ("no dashboard specified in the original brief" was true then; nothing else in this phase needs it, so it's picked up here instead of invented mid-Phase-1). |
 
 ## Summary: deviations from the original brief
 
