@@ -576,3 +576,14 @@ Phase 2 is now complete (Stages 1-6).
   file uploads stayed deferred in Phase 1 Stage 5. `notify()` mirrors
   `audit()`: a single helper called from inside the action that causes
   the event, not a generic event bus.
+- Phase 3 Stage 2: messaging is relationship-scoped, not an open
+  directory (confirmed with the user before building this stage,
+  mirroring the same decision already made for shadowing visibility in
+  Phase 2 Stage 3): a patient can only message a doctor they've had an
+  appointment with; a student can only message their own
+  supervisor(s); staff can message each other freely; admin can
+  message anyone. The relationship is symmetric and derived from
+  existing `Appointment`/`StudentPlacement` rows in both directions --
+  a doctor's own patients and own supervised students appear in
+  *their* recipient list too, not invented as a one-way "only the
+  patient can start it" rule.
