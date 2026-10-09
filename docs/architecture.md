@@ -504,3 +504,18 @@ can't track competencies before an assessment exists to track).
   Stage 4, but here the transition is inseparable from the record that
   justifies it -- there's no code path that marks an activity reviewed
   without an actual `Feedback` row to show for it.
+- Phase 2 Stage 5: `ClinicalLogbookEntry` has no manual-entry path at
+  all -- the brief required the logbook to be "calculated from database
+  records, not fake numbers," so the only place one is ever created is
+  inside `updateAppointmentStatusForUser`, when an appointment
+  transitions to `COMPLETED`, for every student with a
+  `ShadowingAssignment` on it. Only `OBSERVED_CONSULTATION` is
+  auto-generated; the other three `LogbookEntryType` values (`ENCOUNTER`,
+  `EMERGENCY_OBSERVATION`, `PROCEDURE_OBSERVED`) would need an
+  appointment-type distinction that doesn't exist anywhere in the
+  schema, and adding one now would be speculative scope.
+- Phase 2 Stage 5: `StudentCompetency.currentLevel` always reflects the
+  most recent `CompetencyAssessment` score, not a computed average or
+  max -- consistent with how `LearningActivity.status` and
+  `Appointment.status` are both "latest known state," not aggregates,
+  everywhere else in this schema.
