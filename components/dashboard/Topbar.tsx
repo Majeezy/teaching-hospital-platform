@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
+import { SearchBar } from "@/components/dashboard/SearchBar";
 import type { RoleName } from "@prisma/client";
 import type { listNotificationsForUser } from "@/actions/notifications";
 
@@ -27,7 +28,7 @@ export function Topbar({
   unreadCount: number;
 }) {
   return (
-    <header className="flex h-14 items-center justify-between border-b px-4 md:px-6">
+    <header className="flex h-14 items-center justify-between gap-4 border-b px-4 md:px-6">
       <div className="flex flex-wrap items-center gap-2">
         {roles.map((role) => (
           <Badge key={role} variant="secondary" className="text-xs">
@@ -35,6 +36,8 @@ export function Topbar({
           </Badge>
         ))}
       </div>
+
+      <SearchBar />
 
       <div className="flex items-center gap-2">
         <NotificationBell notifications={notifications} unreadCount={unreadCount} />
