@@ -88,7 +88,12 @@ another user?"), which a mocked Prisma client can't meaningfully verify.
 - [x] Phase 1, Stage 4 — Appointments
 - [x] Phase 1, Stage 5 — Clinical records
 - [x] Phase 1, Stage 6 — Role dashboards
-- [ ] Phase 2 — Education platform (students, placements, shadowing, learning activities, competencies)
+- [ ] Phase 2, Stage 1 — Student management
+- [ ] Phase 2, Stage 2 — Clinical placements
+- [ ] Phase 2, Stage 3 — Shadowing
+- [ ] Phase 2, Stage 4 — Learning activities, reflections & feedback
+- [ ] Phase 2, Stage 5 — Clinical logbook & competency tracking
+- [ ] Phase 2, Stage 6 — Student dashboard
 - [ ] Phase 3 — Cross-cutting (notifications, search)
 - [ ] Phase 4 — Harden & ship (security review, E2E tests, polish, deploy, docs)
 
