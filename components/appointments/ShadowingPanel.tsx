@@ -92,14 +92,14 @@ export function ShadowingPanel({
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {assignments.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             No students assigned to shadow this appointment.
           </p>
         ) : (
           assignments.map((assignment) => (
             <p key={assignment.id} className="text-sm">
               {assignment.student.user.name}{" "}
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted-foreground">
                 (observer, read-only)
               </span>
             </p>
@@ -133,7 +133,7 @@ export function ShadowingPanel({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Only students with an active placement under you appear here.
               </p>
             </div>

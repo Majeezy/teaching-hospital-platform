@@ -73,11 +73,11 @@ export function ResetPasswordButton({
           <DialogHeader>
             <DialogTitle>New temporary password</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             Shown once. Copy it now and share it with {userName} out of band
             -- it won&rsquo;t be shown again.
           </p>
-          <div className="flex items-center gap-2 rounded-md border bg-zinc-50 p-3 font-mono text-sm dark:bg-zinc-900">
+          <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3 font-mono text-sm">
             <span className="flex-1 break-all">{temporaryPassword}</span>
             <Button variant="outline" size="sm" onClick={handleCopy}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
