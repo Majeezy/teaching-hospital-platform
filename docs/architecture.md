@@ -1034,3 +1034,22 @@ doesn't have to read the whole log to find them.
   same neutral gray. `COMPLETED`/`REVIEWED`/an `ACTIVE` placement now
   render success-green; `IN_PROGRESS` keeps the teal default variant
   (reads as "happening now"); `CANCELLED`/`NO_SHOW` stay destructive.
+- Correction to several earlier entries in this log: the
+  `dashboard.test.ts` nurse-department failure, repeatedly written off
+  above as "a known pre-existing flaky test" across Stages 3-4 of this
+  phase, was not actually flaky. Surveying the shared dev/prod database
+  (confirmed via `prisma/seed.ts` that the *only* legitimate seeded
+  user is the demo admin) turned up 20 leftover synthetic users --
+  `test-*@example.com`, `debug-*@teachinghospital.test`,
+  `verify-*@teachinghospital.test` -- from earlier debug scripts across
+  this session whose cleanup code never ran, almost certainly because
+  an unhandled error (a cold-server timeout, in at least one traced
+  case) short-circuited the script before it reached its own delete
+  calls. `getNurseDashboardForUser`'s "upcoming appointments" query
+  caps at `take: 5`; with enough leftover debug appointments scheduled
+  sooner than a test's own fixture, the real one simply didn't make the
+  top 5 -- a deterministic bug, not a race. Deleted all 20 (FK-safe,
+  same order as `tests/e2e/fixtures.ts`'s `cleanupE2EUsers`) and
+  reran the full suite twice: 157/157, clean both times. The lesson
+  worth keeping: in a shared database, "intermittently failing" is a
+  hypothesis to check, not a conclusion to write down.
