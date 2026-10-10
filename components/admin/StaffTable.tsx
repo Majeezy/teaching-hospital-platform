@@ -156,7 +156,7 @@ export function StaffTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center text-sm text-zinc-500"
+                  className="text-center text-sm text-muted-foreground"
                 >
                   No staff accounts yet.
                 </TableCell>
@@ -173,7 +173,7 @@ export function StaffTable({
                   <TableCell className="font-medium">
                     {member.name}
                   </TableCell>
-                  <TableCell className="text-zinc-500">
+                  <TableCell className="text-muted-foreground">
                     {member.email}
                   </TableCell>
                   <TableCell>{roleNames.join(", ")}</TableCell>

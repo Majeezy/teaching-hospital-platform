@@ -40,7 +40,7 @@ export function StudentDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.pendingReflectionActivities.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Nothing outstanding --{" "}
                 <Link href="/activities" className="underline underline-offset-2">
                   view all activities
@@ -52,11 +52,11 @@ export function StudentDashboard({ data }: { data: Data }) {
               <Link
                 key={activity.id}
                 href={`/activities/${activity.id}`}
-                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"
               >
                 <div>
                   <p className="font-medium">{activity.title}</p>
-                  <p className="text-zinc-500">
+                  <p className="text-muted-foreground">
                     Dr. {activity.supervisor.user.name}
                     {activity.dueDate &&
                       ` — due ${formatDate(activity.dueDate)}`}
@@ -79,7 +79,7 @@ export function StudentDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.upcomingShadowing.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 No upcoming shadowed appointments.
               </p>
             )}
@@ -88,7 +88,7 @@ export function StudentDashboard({ data }: { data: Data }) {
                 <p className="font-medium">
                   Dr. {assignment.appointment.doctor.user.name}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-muted-foreground">
                   {assignment.appointment.department.name} —{" "}
                   {formatDateTime(assignment.appointment.scheduledAt)}
                 </p>
@@ -111,16 +111,16 @@ export function StudentDashboard({ data }: { data: Data }) {
                 <p className="font-medium">
                   {data.currentPlacement.department.name}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-muted-foreground">
                   Supervised by Dr. {data.currentPlacement.supervisor.user.name}
                 </p>
-                <p className="text-zinc-500">
+                <p className="text-muted-foreground">
                   {formatDate(data.currentPlacement.startDate)}{" "}
                   – {formatDate(data.currentPlacement.endDate)}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">No active placement.</p>
+              <p className="text-sm text-muted-foreground">No active placement.</p>
             )}
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export function StudentDashboard({ data }: { data: Data }) {
             ))}
             <Link
               href="/competencies"
-              className="mt-1 text-xs text-zinc-500 underline underline-offset-2"
+              className="mt-1 text-xs text-muted-foreground underline underline-offset-2"
             >
               View full history
             </Link>

@@ -22,7 +22,7 @@ async function ProfileContent() {
   return (
     <div className="flex max-w-xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">My profile</h1>
+        <h1 className="font-heading text-2xl font-semibold">My profile</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Keep your contact and medical information current.
         </p>

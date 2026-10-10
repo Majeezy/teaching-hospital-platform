@@ -113,7 +113,7 @@ export function StudentsTable({ students }: { students: Student[] }) {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="text-center text-sm text-zinc-500"
+                  className="text-center text-sm text-muted-foreground"
                 >
                   No students registered yet.
                 </TableCell>
@@ -122,7 +122,7 @@ export function StudentsTable({ students }: { students: Student[] }) {
             {students.map((student) => (
               <TableRow key={student.id}>
                 <TableCell className="font-medium">{student.name}</TableCell>
-                <TableCell className="text-zinc-500">
+                <TableCell className="text-muted-foreground">
                   {student.email}
                 </TableCell>
                 <TableCell>

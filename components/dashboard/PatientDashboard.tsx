@@ -20,7 +20,7 @@ export function PatientDashboard({ data }: { data: Data }) {
         />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Blood type
             </CardTitle>
           </CardHeader>
@@ -30,7 +30,7 @@ export function PatientDashboard({ data }: { data: Data }) {
             </p>
             <Link
               href="/patient/profile"
-              className="text-xs text-zinc-500 underline underline-offset-2"
+              className="text-xs text-muted-foreground underline underline-offset-2"
             >
               Edit profile
             </Link>
@@ -47,7 +47,7 @@ export function PatientDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.upcomingAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Nothing upcoming.{" "}
                 <Link
                   href="/appointments"
@@ -62,13 +62,13 @@ export function PatientDashboard({ data }: { data: Data }) {
               <Link
                 key={appointment.id}
                 href={`/appointments/${appointment.id}`}
-                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"
               >
                 <div>
                   <p className="font-medium">
                     Dr. {appointment.doctor.user.name}
                   </p>
-                  <p className="text-zinc-500">
+                  <p className="text-muted-foreground">
                     {appointment.department.name} —{" "}
                     {formatDateTime(appointment.scheduledAt)}
                   </p>
@@ -90,19 +90,19 @@ export function PatientDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.pastAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">No past appointments.</p>
+              <p className="text-sm text-muted-foreground">No past appointments.</p>
             )}
             {data.pastAppointments.map((appointment) => (
               <Link
                 key={appointment.id}
                 href={`/appointments/${appointment.id}`}
-                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"
               >
                 <div>
                   <p className="font-medium">
                     Dr. {appointment.doctor.user.name}
                   </p>
-                  <p className="text-zinc-500">
+                  <p className="text-muted-foreground">
                     {formatDateTime(appointment.scheduledAt)}
                   </p>
                 </div>

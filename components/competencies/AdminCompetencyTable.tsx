@@ -27,7 +27,7 @@ export function AdminCompetencyTable({ rows }: { rows: Row[] }) {
         <TableBody>
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-sm text-zinc-500">
+              <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
                 No assessments recorded yet.
               </TableCell>
             </TableRow>
@@ -41,7 +41,7 @@ export function AdminCompetencyTable({ rows }: { rows: Row[] }) {
                   {row.currentLevel}/5
                 </Badge>
               </TableCell>
-              <TableCell className="text-sm text-zinc-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {row.lastAssessedAt
                   ? formatDate(row.lastAssessedAt)
                   : "—"}

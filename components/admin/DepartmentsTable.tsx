@@ -114,7 +114,7 @@ export function DepartmentsTable({
               <TableRow>
                 <TableCell
                   colSpan={3}
-                  className="text-center text-sm text-zinc-500"
+                  className="text-center text-sm text-muted-foreground"
                 >
                   No departments yet.
                 </TableCell>
@@ -125,7 +125,7 @@ export function DepartmentsTable({
                 <TableCell className="font-medium">
                   {department.name}
                 </TableCell>
-                <TableCell className="text-zinc-500">
+                <TableCell className="text-muted-foreground">
                   {department.description || "—"}
                 </TableCell>
                 <TableCell>

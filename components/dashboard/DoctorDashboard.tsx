@@ -17,7 +17,7 @@ function AppointmentRow({
   return (
     <p className="flex items-center justify-between text-sm">
       <span className="font-medium">{patientName}</span>
-      <span className="text-zinc-500">{formatDateTime(when)}</span>
+      <span className="text-muted-foreground">{formatDateTime(when)}</span>
     </p>
   );
 }
@@ -45,7 +45,7 @@ export function DoctorDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.todaysAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">Nothing scheduled today.</p>
+              <p className="text-sm text-muted-foreground">Nothing scheduled today.</p>
             )}
             {data.todaysAppointments.map((appointment) => (
               <Link key={appointment.id} href={`/appointments/${appointment.id}`}>
@@ -64,7 +64,7 @@ export function DoctorDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.upcomingAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">Nothing else upcoming.</p>
+              <p className="text-sm text-muted-foreground">Nothing else upcoming.</p>
             )}
             {data.upcomingAppointments.map((appointment) => (
               <Link key={appointment.id} href={`/appointments/${appointment.id}`}>
@@ -86,7 +86,7 @@ export function DoctorDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.recentCompleted.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 No completed appointments yet.
               </p>
             )}
@@ -119,7 +119,7 @@ export function DoctorDashboard({ data }: { data: Data }) {
               ))}
               <Link
                 href="/placements"
-                className="mt-1 text-xs text-zinc-500 underline underline-offset-2"
+                className="mt-1 text-xs text-muted-foreground underline underline-offset-2"
               >
                 View placements
               </Link>
@@ -135,16 +135,16 @@ export function DoctorDashboard({ data }: { data: Data }) {
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {data.activitiesAwaitingFeedback.length === 0 && (
-                <p className="text-sm text-zinc-500">Nothing to review.</p>
+                <p className="text-sm text-muted-foreground">Nothing to review.</p>
               )}
               {data.activitiesAwaitingFeedback.map((activity) => (
                 <Link
                   key={activity.id}
                   href={`/activities/${activity.id}`}
-                  className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"
                 >
                   <span className="font-medium">{activity.title}</span>
-                  <span className="text-zinc-500">{activity.student.user.name}</span>
+                  <span className="text-muted-foreground">{activity.student.user.name}</span>
                 </Link>
               ))}
             </CardContent>

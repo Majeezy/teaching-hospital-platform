@@ -40,20 +40,20 @@ export function AdminDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {data.pendingAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">Nothing pending.</p>
+              <p className="text-sm text-muted-foreground">Nothing pending.</p>
             )}
             {data.pendingAppointments.map((appointment) => (
               <Link
                 key={appointment.id}
                 href={`/appointments/${appointment.id}`}
-                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"
               >
                 <div>
                   <p className="font-medium">
                     {appointment.patient.user.name} with Dr.{" "}
                     {appointment.doctor.user.name}
                   </p>
-                  <p className="text-zinc-500">
+                  <p className="text-muted-foreground">
                     {formatDateTime(appointment.scheduledAt)}
                   </p>
                 </div>
@@ -73,12 +73,12 @@ export function AdminDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.recentActivity.length === 0 && (
-              <p className="text-sm text-zinc-500">No activity recorded yet.</p>
+              <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
             )}
             {data.recentActivity.map((entry) => (
               <div key={entry.id} className="text-sm">
                 <span className="font-medium">{entry.actor.name}</span>{" "}
-                <span className="text-zinc-500">
+                <span className="text-muted-foreground">
                   {entry.action.replaceAll("_", " ").toLowerCase()} —{" "}
                   {formatDateTime(entry.createdAt)}
                 </span>

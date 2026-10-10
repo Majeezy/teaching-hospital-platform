@@ -114,7 +114,7 @@ export function AppointmentsTable({
             <TableRow>
               <TableCell
                 colSpan={isPatientOnly ? 5 : 6}
-                className="text-center text-sm text-zinc-500"
+                className="text-center text-sm text-muted-foreground"
               >
                 No appointments yet.
               </TableCell>
@@ -133,7 +133,7 @@ export function AppointmentsTable({
                   </TableCell>
                 )}
                 <TableCell>{appointment.doctor.user.name}</TableCell>
-                <TableCell className="text-zinc-500">
+                <TableCell className="text-muted-foreground">
                   {appointment.department.name}
                 </TableCell>
                 <TableCell>
