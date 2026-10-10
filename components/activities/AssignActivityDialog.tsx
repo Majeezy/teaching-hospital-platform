@@ -160,7 +160,7 @@ export function AssignActivityDialog({ students }: { students: Student[] }) {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Only appointments this student shadowed under you appear here.
             </p>
           </div>

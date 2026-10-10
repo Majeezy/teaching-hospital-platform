@@ -54,7 +54,7 @@ export function ClinicalRecordsPanel({
           hard way when a real user reported it as "nothing happens
           when I click Add note" while signed in as admin. */}
       {isAdmin && (
-        <p className="rounded-md border border-dashed px-3 py-2 text-sm text-zinc-500">
+        <p className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
           You&rsquo;re viewing clinical records as an admin, which is
           read-only oversight access. Only the assigned doctor can add
           notes, diagnoses, prescriptions, or tests.
@@ -128,7 +128,7 @@ function SectionShell({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {empty ? (
-          <p className="text-sm text-zinc-500">Nothing recorded yet.</p>
+          <p className="text-sm text-muted-foreground">Nothing recorded yet.</p>
         ) : (
           children
         )}
@@ -139,7 +139,7 @@ function SectionShell({
 
 function RecordMeta({ author, date }: { author: string; date: Date }) {
   return (
-    <p className="text-xs text-zinc-500">
+    <p className="text-xs text-muted-foreground">
       {author} — {formatDateTime(date)}
     </p>
   );
@@ -270,7 +270,7 @@ function DiagnosesSection({
             <p className="text-sm">
               {diagnosis.description}
               {diagnosis.icdCode && (
-                <span className="text-zinc-500"> ({diagnosis.icdCode})</span>
+                <span className="text-muted-foreground"> ({diagnosis.icdCode})</span>
               )}
             </p>
             <RecordMeta
@@ -357,7 +357,7 @@ function PrescriptionsSection({
               {prescription.medication} — {prescription.dosage}
             </p>
             {prescription.instructions && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 {prescription.instructions}
               </p>
             )}
@@ -465,11 +465,11 @@ function TestsSection({
           <div key={order.id} className="rounded-md border p-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{order.testType}</p>
-              <span className="text-xs text-zinc-500">{order.status}</span>
+              <span className="text-xs text-muted-foreground">{order.status}</span>
             </div>
             <RecordMeta author={order.author.name} date={order.orderedAt} />
             {order.result ? (
-              <div className="mt-2 rounded bg-zinc-50 p-2 text-sm dark:bg-zinc-900">
+              <div className="mt-2 rounded bg-muted/50 p-2 text-sm">
                 {order.result.result}
               </div>
             ) : (

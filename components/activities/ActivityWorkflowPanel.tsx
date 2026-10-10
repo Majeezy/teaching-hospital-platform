@@ -116,7 +116,7 @@ export function ActivityWorkflowPanel({
           {reflection ? (
             <div className="rounded-md border p-3">
               <p className="text-sm">{reflection.content}</p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Submitted {formatDateTime(reflection.submittedAt)}
               </p>
             </div>
@@ -150,7 +150,7 @@ export function ActivityWorkflowPanel({
                   </Button>
                 </form>
               ) : (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted-foreground">
                   No reflection submitted yet.
                 </p>
               )}
@@ -195,7 +195,7 @@ export function ActivityWorkflowPanel({
                     {entry.recommendedActivities}
                   </p>
                 )}
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatDateTime(entry.createdAt)}
                 </p>
               </div>
@@ -246,7 +246,7 @@ export function ActivityWorkflowPanel({
               </Button>
             </form>
           ) : (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               {status === "COMPLETED"
                 ? "Awaiting supervisor feedback."
                 : "No feedback yet."}
