@@ -667,3 +667,38 @@ Phase 3 is now complete (Stages 1-4).
   is returned to the caller once and never logged anywhere, including
   the audit entry's own metadata -- confirmed directly in the test
   (`JSON.stringify(entry.metadata)` doesn't contain the plaintext).
+- Phase 4 Stage 2: a systematic authorization re-audit (three parallel
+  passes covering every action module plus `lib/auth.ts`,
+  `lib/permissions.ts`, `proxy.ts`, and both dynamic `[id]` pages)
+  found no critical or high-severity issues anywhere, and the
+  education platform came back clean outright. Fixed: no guard
+  against an admin targeting another admin account via
+  `deactivateUser`/`resetPassword`; a systemic pattern across
+  `appointments.ts`/`clinical-records.ts`/`shadowing.ts`/
+  `learning-activities.ts` where a client-supplied id was fetched via
+  `findUniqueOrThrow` *before* the authorization check ran, so a
+  nonexistent id and a forbidden id threw two different exception
+  types to a direct caller even though the page layer already masked
+  the distinction (new `requireFound()` helper in
+  `lib/permissions.ts` normalizes this); a timing side-channel in
+  `lib/auth.ts`'s `authorize()` that let "no such email" be
+  distinguished from "wrong password" by response time; a TOCTOU race
+  in `registerPatient`'s email-uniqueness check; `messages.ts`'s
+  recipient-eligibility branches being exclusive (if/else-if) instead
+  of additive, which would silently under-serve a dual-role account;
+  and `requestAppointmentForUser` not checking the target doctor's
+  `isActive`. Added security headers (CSP, HSTS, etc.) to
+  `next.config.ts`, none of which existed before, and fixed
+  `.env.example`, which was missing `NEXTAUTH_SECRET` entirely despite
+  both `lib/auth.ts` and `proxy.ts` requiring it.
+- **Known limitations, accepted rather than fixed in this stage:** no
+  rate limiting anywhere (login, registration) -- would need a new
+  external dependency (e.g. Upstash) for a single-instance portfolio
+  deployment with no existing abuse signal; no FK-conflict handling on
+  department deletion (throws a raw Prisma constraint error if the
+  department still has staff/appointments referencing it -- a UX gap,
+  not a security one); no `reactivateUser` action, so a deactivation
+  is currently irreversible through the UI. None of these are
+  authorization bypasses; all three are scope decisions for a
+  portfolio project, listed here so they read as decisions rather than
+  oversights discovered later.
