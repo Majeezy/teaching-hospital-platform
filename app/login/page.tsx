@@ -4,6 +4,9 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   return (
@@ -44,60 +47,40 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 py-12">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center bg-background px-6 py-12">
+      <h1 className="font-heading text-2xl font-semibold text-foreground">
+        Sign in
+      </h1>
 
       {justRegistered && (
-        <p className="mt-2 text-sm text-emerald-600">
+        <p className="mt-2 text-sm text-primary">
           Account created — sign in below.
         </p>
       )}
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-        <Field label="Email" name="email" type="email" required />
-        <Field label="Password" name="password" type="password" required />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" required />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" name="password" type="password" required />
+        </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
-        >
+        <Button type="submit" disabled={submitting} className="mt-2">
           {submitting ? "Signing in…" : "Sign in"}
-        </button>
+        </Button>
       </form>
 
-      <p className="mt-6 text-sm text-zinc-500">
+      <p className="mt-6 text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
         <Link href="/register" className="underline">
           Register as a patient
         </Link>
       </p>
     </main>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type,
-  required,
-}: {
-  label: string;
-  name: string;
-  type: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium">{label}</span>
-      <input
-        name={name}
-        type={type}
-        required={required}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-      />
-    </label>
   );
 }
