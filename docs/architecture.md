@@ -657,3 +657,13 @@ Phase 2 is now complete (Stages 1-6).
   created.
 
 Phase 3 is now complete (Stages 1-4).
+
+- Phase 4 Stage 1: `resetPasswordForUser` is the admin-assisted
+  password reset decided with the user (see the Phase 4 breakdown
+  above) -- it mirrors `deactivateUserForUser`'s exact shape
+  (admin-only, self-target blocked, one audit entry) rather than
+  inventing a different authorization pattern for the one admin action
+  that happens to touch a credential. The generated temporary password
+  is returned to the caller once and never logged anywhere, including
+  the audit entry's own metadata -- confirmed directly in the test
+  (`JSON.stringify(entry.metadata)` doesn't contain the plaintext).
