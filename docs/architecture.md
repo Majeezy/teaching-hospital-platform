@@ -777,3 +777,37 @@ Phase 3 is now complete (Stages 1-4).
   landing page naming what the project is, with sign-in/register CTAs
   and the seeded demo admin credentials for a reviewer to try it
   immediately.
+- Phase 4 Stage 5: wired `prisma migrate deploy` into the `build`
+  script (it was plain `next build` before) and documented
+  `NEXTAUTH_URL` in `.env.example`, matching the Stage 4 breakdown's
+  known gap. The rest of this stage turned out to be less of a
+  checklist than expected -- confirming production environment
+  variables, the stage's explicit scope, surfaced that the live Vercel
+  deployment had **zero** environment variables configured at all, and
+  a check of recent deployments showed production builds had in fact
+  been failing outright. Root cause of the build failures: no
+  `postinstall` script, so `prisma generate` never ran on a fresh
+  `npm install` -- the generated client is gitignored like the rest of
+  `node_modules`, so it has to be regenerated on every install, and
+  every production build was compiling against an ungenerated client,
+  cascading into dozens of unrelated-looking TypeScript errors. Fixed
+  both: set `DATABASE_URL`/`DIRECT_URL` (reusing the dev Neon
+  database), a freshly generated `NEXTAUTH_SECRET`, and `NEXTAUTH_URL`
+  in the Vercel dashboard (confirmed with the user before touching
+  live infrastructure), and added `"postinstall": "prisma generate"`
+  to `package.json`. The first deploy after the env-var fix still
+  failed on the missing-client error above; the postinstall fix
+  resolved it and the next deploy succeeded.
+  Smoke-testing that successful deploy end-to-end (the stage's other
+  explicit scope item) surfaced one more real bug: a React hydration
+  error (#418) on `/appointments`, caused by `AppointmentsTable` (a
+  client component) calling `toLocaleString()` on a date directly in
+  its render with no explicit locale/timeZone -- the server (Vercel,
+  UTC) and a visitor's browser disagree on the runtime default, so the
+  server-rendered and client-hydrated text for the same node differed.
+  The same unpinned pattern turned up 30 times across 20 files, not
+  just that one; fixed it properly rather than patching only the
+  instance that happened to reproduce, via a single
+  `lib/format-date.ts` used everywhere a date is displayed. Re-ran the
+  live smoke test after that fix shipped: every page checked, desktop
+  and mobile, zero console errors.
