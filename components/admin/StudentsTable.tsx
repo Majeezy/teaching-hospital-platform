@@ -29,6 +29,7 @@ import {
   type listStudentsForUser,
 } from "@/actions/students";
 import { deactivateUser } from "@/actions/users";
+import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 type Student = Awaited<ReturnType<typeof listStudentsForUser>>[number];
 
@@ -104,7 +105,7 @@ export function StudentsTable({ students }: { students: Student[] }) {
               <TableHead>Year</TableHead>
               <TableHead>Program</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-28" />
+              <TableHead className="w-48" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -142,14 +143,20 @@ export function StudentsTable({ students }: { students: Student[] }) {
                 </TableCell>
                 <TableCell>
                   {student.isActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={isPending}
-                      onClick={() => handleDeactivate(student)}
-                    >
-                      Deactivate
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <ResetPasswordButton
+                        userId={student.id}
+                        userName={student.name}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => handleDeactivate(student)}
+                      >
+                        Deactivate
+                      </Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>

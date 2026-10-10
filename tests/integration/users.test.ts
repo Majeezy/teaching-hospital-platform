@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import {
   deactivateUserForUser,
   getCurrentUserForUser,
   listUsersForUser,
+  resetPasswordForUser,
 } from "@/actions/users";
 import { AuthorizationError, type SessionUser } from "@/lib/permissions";
 
@@ -115,5 +116,56 @@ describe("user management authorization (real database)", () => {
 
     expect(entry).not.toBeNull();
     expect(entry?.action).toBe("DEACTIVATED_USER");
+  });
+
+  it("rejects a patient resetting another user's password", async () => {
+    await expect(
+      resetPasswordForUser(asPatient(), adminUserId),
+    ).rejects.toThrow(AuthorizationError);
+  });
+
+  it("prevents an admin from resetting their own password this way", async () => {
+    await expect(
+      resetPasswordForUser(asAdmin(), adminUserId),
+    ).rejects.toThrow(AuthorizationError);
+  });
+
+  it("lets an admin reset another user's password, invalidating the old one", async () => {
+    const { temporaryPassword } = await resetPasswordForUser(
+      asAdmin(),
+      patientUserId,
+    );
+    expect(temporaryPassword.length).toBeGreaterThanOrEqual(16);
+
+    const updated = await prisma.user.findUniqueOrThrow({
+      where: { id: patientUserId },
+    });
+    const oldPasswordStillWorks = await verifyPassword(
+      "test-password-123",
+      updated.passwordHash,
+    );
+    const newPasswordWorks = await verifyPassword(
+      temporaryPassword,
+      updated.passwordHash,
+    );
+    expect(oldPasswordStillWorks).toBe(false);
+    expect(newPasswordWorks).toBe(true);
+  });
+
+  it("writes an audit log entry when a password is reset, without the plaintext", async () => {
+    const { temporaryPassword } = await resetPasswordForUser(
+      asAdmin(),
+      patientUserId,
+    );
+
+    const entry = await prisma.auditLog.findFirst({
+      where: { actorId: adminUserId, entityId: patientUserId, action: "RESET_PASSWORD" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    expect(entry).not.toBeNull();
+    expect(JSON.stringify(entry?.metadata ?? "")).not.toContain(
+      temporaryPassword,
+    );
   });
 });
