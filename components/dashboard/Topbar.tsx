@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -49,7 +48,12 @@ export function Topbar({
             <ChevronDown size={14} className="text-zinc-500" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{name}</DropdownMenuLabel>
+            {/* Not DropdownMenuLabel (Base UI's Menu.GroupLabel) -- that
+                requires a surrounding Menu.Group, which this isn't; using
+                it bare throws "MenuGroupContext is missing" at runtime. */}
+            <p className="px-1.5 py-1 text-xs font-medium text-muted-foreground">
+              {name}
+            </p>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => signOut({ callbackUrl: "/login" })}

@@ -303,8 +303,14 @@ describe("messaging: relationship-scoped recipients and delivery (real database)
   it("nurses can message staff but have no patient/student relationship to surface", async () => {
     const recipients = await listEligibleRecipientsForUser(asNurse());
     expect(recipients.some((r) => r.userId === doctorAUserId)).toBe(true);
-    expect(recipients.some((r) => r.roles.includes("PATIENT"))).toBe(false);
-    expect(recipients.some((r) => r.roles.includes("STUDENT"))).toBe(false);
+    // Checked against this fixture's own patient/student, not "no
+    // recipient anywhere has a PATIENT/STUDENT role" -- the shared dev
+    // database can legitimately contain a dual-role staff member from a
+    // concurrently-running test file (e.g. a doctor who is also a
+    // patient), and that's correct behavior to surface, not a leak.
+    expect(recipients.some((r) => r.userId === patientAUserId)).toBe(false);
+    expect(recipients.some((r) => r.userId === patientBUserId)).toBe(false);
+    expect(recipients.some((r) => r.userId === studentUserId)).toBe(false);
   });
 
   it("admin can message anyone", async () => {

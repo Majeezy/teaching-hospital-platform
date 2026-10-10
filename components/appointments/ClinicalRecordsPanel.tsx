@@ -158,20 +158,30 @@ function NotesSection({
   }
 
   return (
-    <SectionShell
-      title="Clinical Notes"
-      icon={FileText}
-      canEdit={canEdit}
-      onAdd={() => setOpen(true)}
-      addLabel="Add note"
-      empty={notes.length === 0}
-    >
-      {notes.map((note) => (
-        <div key={note.id} className="rounded-md border p-3">
-          <p className="text-sm">{note.content}</p>
-          <RecordMeta author={note.author.name} date={note.createdAt} />
-        </div>
-      ))}
+    <>
+      {/* The dialog must live outside SectionShell's children, not
+          inside -- SectionShell only renders children when the list
+          is non-empty, so a dialog nested in there would never mount
+          (and the "Add" button would silently do nothing) the very
+          first time anyone tries to add one, i.e. always, on a brand
+          new appointment. Found via a real browser E2E test; curl and
+          direct action-function tests never click a button, so
+          neither caught it. */}
+      <SectionShell
+        title="Clinical Notes"
+        icon={FileText}
+        canEdit={canEdit}
+        onAdd={() => setOpen(true)}
+        addLabel="Add note"
+        empty={notes.length === 0}
+      >
+        {notes.map((note) => (
+          <div key={note.id} className="rounded-md border p-3">
+            <p className="text-sm">{note.content}</p>
+            <RecordMeta author={note.author.name} date={note.createdAt} />
+          </div>
+        ))}
+      </SectionShell>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -187,7 +197,7 @@ function NotesSection({
           </form>
         </DialogContent>
       </Dialog>
-    </SectionShell>
+    </>
   );
 }
 
@@ -226,28 +236,30 @@ function DiagnosesSection({
   }
 
   return (
-    <SectionShell
-      title="Diagnoses"
-      icon={Stethoscope}
-      canEdit={canEdit}
-      onAdd={() => setOpen(true)}
-      addLabel="Add diagnosis"
-      empty={diagnoses.length === 0}
-    >
-      {diagnoses.map((diagnosis) => (
-        <div key={diagnosis.id} className="rounded-md border p-3">
-          <p className="text-sm">
-            {diagnosis.description}
-            {diagnosis.icdCode && (
-              <span className="text-zinc-500"> ({diagnosis.icdCode})</span>
-            )}
-          </p>
-          <RecordMeta
-            author={diagnosis.author.name}
-            date={diagnosis.createdAt}
-          />
-        </div>
-      ))}
+    <>
+      <SectionShell
+        title="Diagnoses"
+        icon={Stethoscope}
+        canEdit={canEdit}
+        onAdd={() => setOpen(true)}
+        addLabel="Add diagnosis"
+        empty={diagnoses.length === 0}
+      >
+        {diagnoses.map((diagnosis) => (
+          <div key={diagnosis.id} className="rounded-md border p-3">
+            <p className="text-sm">
+              {diagnosis.description}
+              {diagnosis.icdCode && (
+                <span className="text-zinc-500"> ({diagnosis.icdCode})</span>
+              )}
+            </p>
+            <RecordMeta
+              author={diagnosis.author.name}
+              date={diagnosis.createdAt}
+            />
+          </div>
+        ))}
+      </SectionShell>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -270,7 +282,7 @@ function DiagnosesSection({
           </form>
         </DialogContent>
       </Dialog>
-    </SectionShell>
+    </>
   );
 }
 
@@ -310,30 +322,32 @@ function PrescriptionsSection({
   }
 
   return (
-    <SectionShell
-      title="Prescriptions"
-      icon={Pill}
-      canEdit={canEdit}
-      onAdd={() => setOpen(true)}
-      addLabel="Add prescription"
-      empty={prescriptions.length === 0}
-    >
-      {prescriptions.map((prescription) => (
-        <div key={prescription.id} className="rounded-md border p-3">
-          <p className="text-sm font-medium">
-            {prescription.medication} — {prescription.dosage}
-          </p>
-          {prescription.instructions && (
-            <p className="text-sm text-zinc-500">
-              {prescription.instructions}
+    <>
+      <SectionShell
+        title="Prescriptions"
+        icon={Pill}
+        canEdit={canEdit}
+        onAdd={() => setOpen(true)}
+        addLabel="Add prescription"
+        empty={prescriptions.length === 0}
+      >
+        {prescriptions.map((prescription) => (
+          <div key={prescription.id} className="rounded-md border p-3">
+            <p className="text-sm font-medium">
+              {prescription.medication} — {prescription.dosage}
             </p>
-          )}
-          <RecordMeta
-            author={prescription.author.name}
-            date={prescription.createdAt}
-          />
-        </div>
-      ))}
+            {prescription.instructions && (
+              <p className="text-sm text-zinc-500">
+                {prescription.instructions}
+              </p>
+            )}
+            <RecordMeta
+              author={prescription.author.name}
+              date={prescription.createdAt}
+            />
+          </div>
+        ))}
+      </SectionShell>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -360,7 +374,7 @@ function PrescriptionsSection({
           </form>
         </DialogContent>
       </Dialog>
-    </SectionShell>
+    </>
   );
 }
 
@@ -418,39 +432,41 @@ function TestsSection({
   }
 
   return (
-    <SectionShell
-      title="Tests"
-      icon={FlaskConical}
-      canEdit={canEdit}
-      onAdd={() => setOrderOpen(true)}
-      addLabel="Order test"
-      empty={testOrders.length === 0}
-    >
-      {testOrders.map((order) => (
-        <div key={order.id} className="rounded-md border p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">{order.testType}</p>
-            <span className="text-xs text-zinc-500">{order.status}</span>
-          </div>
-          <RecordMeta author={order.author.name} date={order.orderedAt} />
-          {order.result ? (
-            <div className="mt-2 rounded bg-zinc-50 p-2 text-sm dark:bg-zinc-900">
-              {order.result.result}
+    <>
+      <SectionShell
+        title="Tests"
+        icon={FlaskConical}
+        canEdit={canEdit}
+        onAdd={() => setOrderOpen(true)}
+        addLabel="Order test"
+        empty={testOrders.length === 0}
+      >
+        {testOrders.map((order) => (
+          <div key={order.id} className="rounded-md border p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{order.testType}</p>
+              <span className="text-xs text-zinc-500">{order.status}</span>
             </div>
-          ) : (
-            canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => setResultTarget(order.id)}
-              >
-                Enter result
-              </Button>
-            )
-          )}
-        </div>
-      ))}
+            <RecordMeta author={order.author.name} date={order.orderedAt} />
+            {order.result ? (
+              <div className="mt-2 rounded bg-zinc-50 p-2 text-sm dark:bg-zinc-900">
+                {order.result.result}
+              </div>
+            ) : (
+              canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => setResultTarget(order.id)}
+                >
+                  Enter result
+                </Button>
+              )
+            )}
+          </div>
+        ))}
+      </SectionShell>
 
       <Dialog open={orderOpen} onOpenChange={setOrderOpen}>
         <DialogContent>
@@ -494,6 +510,6 @@ function TestsSection({
           </form>
         </DialogContent>
       </Dialog>
-    </SectionShell>
+    </>
   );
 }

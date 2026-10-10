@@ -18,9 +18,7 @@ describe("Phase 4 Stage 2 security hardening fixes (real database)", () => {
   let adminAUserId: string;
   let adminBUserId: string;
   let patientUserId: string;
-  let patientProfileId: string;
   let doctorUserId: string;
-  let doctorProfileId: string;
   let inactiveDoctorProfileId: string;
   let inactiveDoctorUserId: string;
   let dualRoleUserId: string;
@@ -146,9 +144,7 @@ describe("Phase 4 Stage 2 security hardening fixes (real database)", () => {
     adminAUserId = adminA.id;
     adminBUserId = adminB.id;
     patientUserId = patient.id;
-    patientProfileId = patient.patientProfile!.id;
     doctorUserId = doctor.id;
-    doctorProfileId = doctor.doctorProfile!.id;
     inactiveDoctorUserId = inactiveDoctor.id;
     inactiveDoctorProfileId = inactiveDoctor.doctorProfile!.id;
     dualRoleUserId = dualRoleUser.id;
