@@ -78,7 +78,7 @@ export async function getAppointmentRecordsForUser(
 ) {
   // Reuses the exact same access rule as the appointment itself --
   // record visibility never diverges from appointment visibility.
-  const { appointment, canEdit, isShadowingStudent } =
+  const { appointment, canEdit, isShadowingStudent, isAdmin } =
     await getAppointmentForUser(user, appointmentId);
 
   // All four queries are independent of each other -- only whether the
@@ -128,6 +128,7 @@ export async function getAppointmentRecordsForUser(
     appointment,
     canEdit,
     isShadowingStudent,
+    isAdmin,
     notes,
     diagnoses,
     prescriptions,
