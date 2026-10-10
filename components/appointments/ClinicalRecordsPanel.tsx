@@ -31,6 +31,7 @@ type Records = Awaited<ReturnType<typeof getAppointmentRecordsForUser>>;
 export function ClinicalRecordsPanel({
   appointmentId,
   canEdit,
+  isAdmin,
   hidePrescriptionsAndTests,
   notes,
   diagnoses,
@@ -39,39 +40,57 @@ export function ClinicalRecordsPanel({
 }: {
   appointmentId: string;
   canEdit: boolean;
+  isAdmin: boolean;
   hidePrescriptionsAndTests: boolean;
 } & Pick<Records, "notes" | "diagnoses" | "prescriptions" | "testOrders">) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <NotesSection
-        appointmentId={appointmentId}
-        canEdit={canEdit}
-        notes={notes}
-      />
-      <DiagnosesSection
-        appointmentId={appointmentId}
-        canEdit={canEdit}
-        diagnoses={diagnoses}
-      />
-      {/* A shadowing student's prescriptions/testOrders are already [] from
-          the server (clinical-records.ts never queries them), but we also
-          skip rendering the section itself here rather than showing a
-          misleading "Nothing recorded yet" for data the student simply
-          isn't allowed to see. */}
-      {!hidePrescriptionsAndTests && (
-        <>
-          <PrescriptionsSection
-            appointmentId={appointmentId}
-            canEdit={canEdit}
-            prescriptions={prescriptions}
-          />
-          <TestsSection
-            appointmentId={appointmentId}
-            canEdit={canEdit}
-            testOrders={testOrders}
-          />
-        </>
+    <div className="flex flex-col gap-4">
+      {/* The "Add" buttons below are deliberately absent for admins, not
+          a bug -- clinical notes/diagnoses/prescriptions are the one
+          resource in this app where admin has read-only oversight
+          access, not full access (see the permissions matrix in
+          docs/architecture.md). Without this, the absent button reads
+          exactly like a broken one from the outside -- confirmed the
+          hard way when a real user reported it as "nothing happens
+          when I click Add note" while signed in as admin. */}
+      {isAdmin && (
+        <p className="rounded-md border border-dashed px-3 py-2 text-sm text-zinc-500">
+          You&rsquo;re viewing clinical records as an admin, which is
+          read-only oversight access. Only the assigned doctor can add
+          notes, diagnoses, prescriptions, or tests.
+        </p>
       )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <NotesSection
+          appointmentId={appointmentId}
+          canEdit={canEdit}
+          notes={notes}
+        />
+        <DiagnosesSection
+          appointmentId={appointmentId}
+          canEdit={canEdit}
+          diagnoses={diagnoses}
+        />
+        {/* A shadowing student's prescriptions/testOrders are already []
+            from the server (clinical-records.ts never queries them), but
+            we also skip rendering the section itself here rather than
+            showing a misleading "Nothing recorded yet" for data the
+            student simply isn't allowed to see. */}
+        {!hidePrescriptionsAndTests && (
+          <>
+            <PrescriptionsSection
+              appointmentId={appointmentId}
+              canEdit={canEdit}
+              prescriptions={prescriptions}
+            />
+            <TestsSection
+              appointmentId={appointmentId}
+              canEdit={canEdit}
+              testOrders={testOrders}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

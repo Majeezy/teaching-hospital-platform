@@ -55,6 +55,7 @@ async function AppointmentDetailContent({
     appointment,
     canEdit,
     isShadowingStudent,
+    isAdmin,
     notes,
     diagnoses,
     prescriptions,
@@ -107,6 +108,7 @@ async function AppointmentDetailContent({
       <ClinicalRecordsPanel
         appointmentId={appointment.id}
         canEdit={canEdit}
+        isAdmin={isAdmin}
         hidePrescriptionsAndTests={isShadowingStudent}
         notes={notes}
         diagnoses={diagnoses}

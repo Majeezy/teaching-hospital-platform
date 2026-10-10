@@ -170,7 +170,7 @@ export async function getAppointmentForUser(
     throw new AuthorizationError("You don't have access to this appointment.");
   }
 
-  return { appointment, canEdit: assignedDoctor, isShadowingStudent };
+  return { appointment, canEdit: assignedDoctor, isShadowingStudent, isAdmin };
 }
 
 export async function listDoctorsForBookingForUser(user: SessionUser) {
