@@ -9,8 +9,8 @@ export function Sidebar({
   unreadMessageCount: number;
 }) {
   return (
-    <aside className="hidden w-60 shrink-0 border-r bg-zinc-50 dark:bg-zinc-950 md:flex md:flex-col">
-      <div className="px-4 py-5 text-sm font-semibold">
+    <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:flex-col">
+      <div className="px-4 py-5 font-heading text-sm font-semibold text-sidebar-primary">
         Teaching Hospital
       </div>
       <NavLinks roles={roles} unreadMessageCount={unreadMessageCount} />
