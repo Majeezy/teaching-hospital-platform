@@ -702,3 +702,41 @@ Phase 3 is now complete (Stages 1-4).
   authorization bypasses; all three are scope decisions for a
   portfolio project, listed here so they read as decisions rather than
   oversights discovered later.
+- Phase 4 Stage 3: Playwright installed and configured (Chromium only
+  -- this suite exists to catch real integration breaks in the
+  journeys listed in the Phase 4 breakdown above, not to do
+  cross-browser compatibility testing), with four specs covering
+  login, the full patient-booking-through-doctor-completing-the-visit
+  journey, the full supervisor-assigns-shadowing-through-to-feedback
+  journey, and admin account provisioning including a password reset.
+  Found and fixed two real, previously-undetected bugs that every
+  prior verification method in this project (curl, calling action
+  functions directly) was structurally incapable of catching because
+  neither one clicks a button in a real browser: `DropdownMenuLabel`
+  (Base UI's `Menu.GroupLabel`) used outside a `Menu.Group` in
+  `Topbar.tsx` and `NotificationBell.tsx`, throwing
+  "MenuGroupContext is missing" and crashing the entire account
+  dropdown -- including Sign Out -- for every user, since Phase 3
+  Stage 1; and all four "Add" dialogs in `ClinicalRecordsPanel.tsx`
+  nested inside `SectionShell`'s children, which only render when the
+  list is non-empty, so the very first "Add note"/"Add diagnosis"/etc.
+  click on a brand-new appointment silently did nothing, since Phase 1
+  Stage 5. Also found, root-caused, and fixed a real performance issue
+  surfaced by E2E timing rather than by a bug: `getAppointmentRecordsForUser`
+  and the appointment detail page were each making two sequential
+  Neon round trips where one `Promise.all` would do, which (combined
+  with React's `startTransition` keeping the pre-mutation UI on screen
+  until the refreshed render is ready) made a just-saved record take
+  several real seconds to visibly appear -- confirmed via direct
+  database polling that the data itself was never stale, only the
+  render. The suite runs against a production build
+  (`next build && next start`), not `next dev`, after confirming
+  Turbopack's on-demand compilation was the dominant factor in that
+  delay; `playwright.config.ts` carries generous timeouts for the same
+  reason `vitest.config.mts` already does -- real Neon latency isn't a
+  sign anything is wrong. Toast assertions (`toast.success(...)`, which
+  auto-dismisses on its own timer) proved racy across several specs;
+  replaced throughout with assertions on the actual resulting UI state
+  (a dialog closing, a status badge changing, a button appearing) --
+  signals tied to the mutation's own success rather than to Sonner's
+  independent dismiss timer.
