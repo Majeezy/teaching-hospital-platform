@@ -12,8 +12,10 @@ for more on that boundary.
 **Live demo:** [teaching-hospital-platform.vercel.app](https://teaching-hospital-platform.vercel.app)
 — sign in with the demo admin account below, or register as a patient.
 
-**Status:** 🚧 Phases 0–4 complete. Phase 5 (visual identity & production
-readiness) in progress, Stage 5.
+**Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
+🚧 Production-readiness hardening (real file uploads, real email
+delivery, rate limiting, a harder security pass) is planned next, not
+yet started.
 
 ## Database
 
@@ -131,8 +133,11 @@ the integration tests.
 - [x] Phase 5, Stage 3 — Dashboard shell
 - [x] Phase 5, Stage 4 — Dashboards & data surfaces
 - [x] Phase 5, Stage 5 — Forms & dialogs
-- [ ] Phase 5, Stage 6 — Final pass & accessibility re-check
+- [x] Phase 5, Stage 6 — Final pass & accessibility re-check
 
-Phases 0–4 (the original scope) are complete. Phase 5 (visual identity and
-movement toward production readiness) is in progress. See
-`docs/architecture.md` for what each phase actually contains.
+Phases 0–5 are complete: the original scope, plus a real visual
+identity and a round of production-readiness hardening. See
+`docs/architecture.md` for what each phase actually contains, including
+the two genuine bugs (dark mode never actually activating; a
+sequential-query latency bug on the activity detail page) found along
+the way.

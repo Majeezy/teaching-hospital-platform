@@ -422,7 +422,7 @@ education platform on top of a foundation that's already correct.
 | **2 — Education platform** | See the Stage 1–6 breakdown below. |
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
-| **5 — Visual identity & production readiness** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below. Sequenced design-first, hardening-second (confirmed with the user) — hardening for real clinical use also carries real legal/compliance obligations (data protection law, consent, breach notification) that are outside what engineering work alone can satisfy; see the note at the start of the Phase 5 breakdown. |
+| **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
 
 ### Phase 1 breakdown
 
@@ -1062,3 +1062,36 @@ doesn't have to read the whole log to find them.
   dialog in scope and found none; Phase 1 already built these against
   the shared `Input`/`Select`/`Button` primitives, so this stage was a
   token sweep only, not a component-swap.
+- Phase 5 Stage 6: swept the last `text-zinc-*` usages
+  (`NotificationBell`, `InboxList`, `SentList`, `SearchBar`, every
+  dashboard page's Suspense fallback) and gave `not-found.tsx`/
+  `error.tsx` the full landing-page treatment -- gold eyebrow, serif
+  heading, real `Button`/`buttonVariants` instead of hardcoded classes.
+  The accessibility re-check this stage's scope called for wasn't a
+  formality: computing actual WCAG ratios (not eyeballing) for every
+  new palette text/background pair found `brand-accent` gold only
+  reaching 3.16:1 against the light background -- failing AA for
+  normal text, affecting the eyebrow labels and the `warning` badge
+  variant. Darkened to `#946818` (4.66:1); all 22 pairs checked across
+  both themes now pass.
+  Also found and fixed a real, reproducible bug surfaced by the full
+  E2E suite at the end of this stage (not flaky -- reproduced 3/3
+  times): `getActivityForUser` ran two sequential Neon round trips
+  that don't depend on each other's results, the exact anti-pattern
+  fixed for appointments in Phase 4 Stage 3 but never applied here.
+  After a supervisor records feedback, `router.refresh()` hits this
+  path on the way back, and the page sat on "Saving…" for 10+ real
+  seconds despite the mutation (and its toast) having already
+  succeeded -- a toast appearing is not the same thing as the UI
+  catching up to it. Parallelized via `Promise.all`; confirmed with a
+  standalone script polling the DOM every 5s (resolved at t+10s, not
+  never) and with two clean full-suite E2E runs afterward.
+
+Phase 5 is now complete (Stages 1-6). Six stages, one real visual
+identity, and two genuine previously-undetected bugs found along the
+way that had nothing to do with design (dark mode never actually
+working since `next-themes` was wired up with no provider; this
+activity-page latency bug) -- consistent with the pattern every prior
+phase's hardening/polish work has shown: the verification step a
+stage exists to do is also what catches the bugs that step wasn't
+specifically looking for.
