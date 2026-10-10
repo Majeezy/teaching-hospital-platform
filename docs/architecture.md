@@ -740,3 +740,40 @@ Phase 3 is now complete (Stages 1-4).
   (a dialog closing, a status badge changing, a button appearing) --
   signals tied to the mutation's own success rather than to Sonner's
   independent dismiss timer.
+- Phase 4 Stage 4: the mobile navigation gap named in the Phase 4
+  breakdown above was real and total -- below the `md` breakpoint the
+  `Sidebar` was `hidden` with no replacement, so a signed-in user on a
+  phone had no way to move between sections at all except the URL bar.
+  Fixed with a `MobileNav` drawer (Base UI's `Dialog` primitives styled
+  as a left-side slide-in panel rather than `components/ui/dialog`'s
+  centered popup, which would have meant fighting its zoom-in
+  animation and positioning classes for no benefit) sharing nav-item
+  markup with the desktop `Sidebar` through a new `NavLinks` component
+  rather than duplicating it. Opening the drawer revealed the header
+  itself didn't fit a phone-width viewport either -- the search input
+  was a fixed 256px and the account button always rendered the full
+  name -- both made responsive, confirmed with real screenshots at a
+  390px viewport, taken by a throwaway Playwright script against the
+  demo admin account, deleted after use same as the Stage 3 debug
+  scripts.
+  Accessibility pass: two real text-on-background contrast failures
+  fixed (`text-zinc-400` on a light background in `NotificationBell`'s
+  timestamp and `SearchBar`'s category label, both under the ~4.5:1
+  WCAG AA threshold for normal text); keyboard focus rings added to
+  nav links and search results, which had none; `aria-expanded` added
+  to the inbox message toggle; and hiding the account button's name
+  text on narrow screens turned out to delete it from the accessibility
+  tree too, not just visually -- caught before shipping it, fixed with
+  an explicit `aria-label` rather than relying on the hidden span.
+  Empty and loading states were audited and found already consistent
+  (same `Loading…` fallback and `"No X yet."` phrasing everywhere) --
+  not a real gap, so left alone. What was a real gap: no `not-found.tsx`
+  or `error.tsx` existed anywhere, so both fell back to Next's bare
+  unstyled defaults; added both, matching the login/register pages'
+  existing minimal visual language. Also found and fixed `app/page.tsx`
+  itself, which had been a literal "Phase 0 — Project setup" wall now
+  nine phases out of date -- the first thing anyone evaluating this
+  portfolio project would see at the live URL -- replaced with a real
+  landing page naming what the project is, with sign-in/register CTAs
+  and the seeded demo admin credentials for a reviewer to try it
+  immediately.
