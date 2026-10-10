@@ -1010,3 +1010,15 @@ doesn't have to read the whole log to find them.
   variant rather than darkening the global `--border` token, which is
   correctly subtle for its real job of separating cards/inputs from
   their background.
+- Phase 5 Stage 3: `Sidebar`, `MobileNav`, and `NavLinks` move onto the
+  sidebar-specific tokens -- teal-tinted panel, serif wordmark, solid
+  teal active state. The mobile drawer's background changed from
+  `bg-background` to `bg-sidebar` so it visually matches the desktop
+  sidebar instead of reading as an unrelated dialog. Also added the
+  manual theme toggle deferred from Stage 1 -- system-preference-only
+  dark mode isn't enough if a user wants dark mode on a light-OS
+  machine. Implemented by branching on next-themes' own `resolvedTheme`
+  being `undefined` pre-hydration rather than a redundant local
+  `mounted` state with its own `useEffect`, which trips this project's
+  `react-hooks/set-state-in-effect` lint rule for no benefit over the
+  signal next-themes already exposes.
