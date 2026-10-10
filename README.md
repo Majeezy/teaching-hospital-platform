@@ -13,7 +13,7 @@ for more on that boundary.
 — sign in with the demo admin account below, or register as a patient.
 
 **Status:** 🚧 Phases 0–4 complete. Phase 5 (visual identity & production
-readiness) in progress, Stage 3.
+readiness) in progress, Stage 4.
 
 ## Database
 
@@ -129,7 +129,7 @@ the integration tests.
 - [x] Phase 5, Stage 1 — Design tokens foundation (palette, type, dark mode)
 - [x] Phase 5, Stage 2 — Public-facing pages
 - [x] Phase 5, Stage 3 — Dashboard shell
-- [ ] Phase 5, Stage 4 — Dashboards & data surfaces
+- [x] Phase 5, Stage 4 — Dashboards & data surfaces
 - [ ] Phase 5, Stage 5 — Forms & dialogs
 - [ ] Phase 5, Stage 6 — Final pass & accessibility re-check
 

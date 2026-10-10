@@ -1022,3 +1022,15 @@ doesn't have to read the whole log to find them.
   `mounted` state with its own `useEffect`, which trips this project's
   `react-hooks/set-state-in-effect` lint rule for no benefit over the
   signal next-themes already exposes.
+- Phase 5 Stage 4: swept every `text-zinc-*` usage across the five role
+  dashboards, every list table, and `StatTile` onto the semantic
+  tokens. Every dashboard-area page's `<h1>` now carries `font-heading`
+  too, not just `DialogTitle` -- 16 page headings, found via a direct
+  grep rather than file-by-file guessing. Added real semantic status
+  colors (`success`, `warning`) as new `Badge` variants and theme
+  tokens -- previously every status collapsed into
+  default/secondary/destructive regardless of what it actually meant,
+  so a `COMPLETED` appointment and a `CONFIRMED` one rendered in the
+  same neutral gray. `COMPLETED`/`REVIEWED`/an `ACTIVE` placement now
+  render success-green; `IN_PROGRESS` keeps the teal default variant
+  (reads as "happening now"); `CANCELLED`/`NO_SHOW` stay destructive.
