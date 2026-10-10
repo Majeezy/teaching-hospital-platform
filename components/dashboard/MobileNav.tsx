@@ -39,11 +39,13 @@ export function MobileNav({
             would be more fragile than just styling the Base UI
             primitives directly here. */}
         <DialogPrimitive.Popup
-          className="fixed inset-y-0 left-0 z-50 flex h-full w-72 max-w-[85%] flex-col bg-background shadow-lg outline-none duration-200 data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left"
+          className="fixed inset-y-0 left-0 z-50 flex h-full w-72 max-w-[85%] flex-col bg-sidebar text-sidebar-foreground shadow-lg outline-none duration-200 data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left"
           aria-label="Navigation"
         >
           <div className="flex items-center justify-between px-4 py-5">
-            <span className="text-sm font-semibold">Teaching Hospital</span>
+            <span className="font-heading text-sm font-semibold text-sidebar-primary">
+              Teaching Hospital
+            </span>
             <DialogPrimitive.Close
               render={
                 <Button
