@@ -7,9 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-plex-serif);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-foreground: var(--brand-accent-foreground);
+  --color-brand-accent-soft: var(--brand-accent-soft);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,73 +51,91 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Clinical teal + academic gold, warm neutrals throughout -- replaces
+   shadcn's default grayscale theme. Picked to read as a credible
+   institution rather than a generic SaaS dashboard: see the Stage 1
+   design-direction artifact linked from the Phase 5 build log in
+   docs/architecture.md for the full rationale. Hex rather than oklch()
+   for exact-match precision against the approved palette; Tailwind v4
+   accepts any valid CSS color in a custom property. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #faf8f4;
+  --foreground: #211f1a;
+  --card: #ffffff;
+  --card-foreground: #211f1a;
+  --popover: #ffffff;
+  --popover-foreground: #211f1a;
+  --primary: #0f5c54;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f0e9;
+  --secondary-foreground: #211f1a;
+  --muted: #f3f0e9;
+  --muted-foreground: #6b6559;
+  --accent: #e3eeec;
+  --accent-foreground: #0f5c54;
+  --brand-accent: #b8822e;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #f5eada;
+  --destructive: #b3432e;
+  --border: #e4dfd6;
+  --input: #e4dfd6;
+  --ring: #0f5c54;
+  /* Recharts is named in the tech stack but not currently a dependency
+     anywhere in this app -- these slots are unused today. Set to the
+     dataviz skill's pre-validated categorical reference order (not
+     hand-picked) so whichever chart gets built first inherits a
+     CVD-safe palette instead of grayscale placeholders. */
+  --chart-1: #2a78d6;
+  --chart-2: #008300;
+  --chart-3: #e87ba4;
+  --chart-4: #eda100;
+  --chart-5: #1baf7a;
+  --radius: 0.75rem;
+  --sidebar: #e3eeec;
+  --sidebar-foreground: #211f1a;
+  --sidebar-primary: #0f5c54;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d4e5e2;
+  --sidebar-accent-foreground: #0f5c54;
+  --sidebar-border: #cfe0dc;
+  --sidebar-ring: #0f5c54;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0b1614;
+  --foreground: #f2efe8;
+  --card: #121f1c;
+  --card-foreground: #f2efe8;
+  --popover: #121f1c;
+  --popover-foreground: #f2efe8;
+  --primary: #3fa08f;
+  --primary-foreground: #0b1614;
+  --secondary: #16211e;
+  --secondary-foreground: #f2efe8;
+  --muted: #16211e;
+  --muted-foreground: #9c9589;
+  --accent: #16302c;
+  --accent-foreground: #3fa08f;
+  --brand-accent: #d9a24e;
+  --brand-accent-foreground: #0b1614;
+  --brand-accent-soft: #2e2416;
+  --destructive: #d9705a;
+  --border: #1f2e2a;
+  --input: #1f2e2a;
+  --ring: #3fa08f;
+  --chart-1: #3987e5;
+  --chart-2: #1fa31f;
+  --chart-3: #d55181;
+  --chart-4: #c98500;
+  --chart-5: #199e70;
+  --sidebar: #0e1917;
+  --sidebar-foreground: #f2efe8;
+  --sidebar-primary: #3fa08f;
+  --sidebar-primary-foreground: #0b1614;
+  --sidebar-accent: #16302c;
+  --sidebar-accent-foreground: #3fa08f;
+  --sidebar-border: #1f2e2a;
+  --sidebar-ring: #3fa08f;
 }
 
 @layer base {
