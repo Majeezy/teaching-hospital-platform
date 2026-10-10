@@ -7,6 +7,7 @@ import {
   requireRole,
   hasRole,
   hasAnyRole,
+  requireFound,
   AuthorizationError,
   type SessionUser,
 } from "@/lib/permissions";
@@ -128,11 +129,13 @@ export async function assignActivityForUser(
   const { doctorProfile } = await assertCanManageStudent(user, data.studentId);
 
   if (data.relatedAppointmentId) {
-    const appointment = await prisma.appointment.findUniqueOrThrow({
-      where: { id: data.relatedAppointmentId },
-    });
+    const appointment = requireFound(
+      await prisma.appointment.findUnique({
+        where: { id: data.relatedAppointmentId },
+      }),
+    );
     if (appointment.doctorId !== doctorProfile.id) {
-      throw new Error(
+      throw new AuthorizationError(
         "You can only tie an activity to your own appointment.",
       );
     }
@@ -190,9 +193,9 @@ export async function startActivityForUser(
     where: { userId: user.id },
   });
 
-  const activity = await prisma.learningActivity.findUniqueOrThrow({
-    where: { id: activityId },
-  });
+  const activity = requireFound(
+    await prisma.learningActivity.findUnique({ where: { id: activityId } }),
+  );
   if (activity.studentId !== studentProfile.id) {
     throw new AuthorizationError("This isn't your activity.");
   }
@@ -225,10 +228,12 @@ export async function submitReflectionForUser(
     where: { userId: user.id },
   });
 
-  const activity = await prisma.learningActivity.findUniqueOrThrow({
-    where: { id: data.learningActivityId },
-    include: { supervisor: { select: { userId: true } } },
-  });
+  const activity = requireFound(
+    await prisma.learningActivity.findUnique({
+      where: { id: data.learningActivityId },
+      include: { supervisor: { select: { userId: true } } },
+    }),
+  );
   if (activity.studentId !== studentProfile.id) {
     throw new AuthorizationError("This isn't your activity.");
   }
@@ -280,10 +285,12 @@ export async function giveFeedbackForUser(
     where: { userId: user.id },
   });
 
-  const activity = await prisma.learningActivity.findUniqueOrThrow({
-    where: { id: data.learningActivityId },
-    include: { student: { select: { userId: true } } },
-  });
+  const activity = requireFound(
+    await prisma.learningActivity.findUnique({
+      where: { id: data.learningActivityId },
+      include: { student: { select: { userId: true } } },
+    }),
+  );
   if (activity.supervisorId !== doctorProfile.id) {
     throw new AuthorizationError(
       "You can only review activities you assigned.",
@@ -372,10 +379,12 @@ export async function getActivityForUser(
   user: SessionUser,
   activityId: string,
 ) {
-  const activity = await prisma.learningActivity.findUniqueOrThrow({
-    where: { id: activityId },
-    include: activityInclude,
-  });
+  const activity = requireFound(
+    await prisma.learningActivity.findUnique({
+      where: { id: activityId },
+      include: activityInclude,
+    }),
+  );
 
   const isAdmin = hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"]);
 

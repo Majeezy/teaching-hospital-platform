@@ -73,6 +73,27 @@ export function isSelf(user: SessionUser, targetUserId: string): boolean {
 }
 
 /**
+ * Wraps a client-supplied-id lookup (findUnique, not findUniqueOrThrow)
+ * so a nonexistent id and a permission failure are indistinguishable to
+ * the caller -- both throw AuthorizationError, never Prisma's own
+ * NotFoundError. Found during the Phase 4 Stage 2 security review: a
+ * handful of functions fetched a record via findUniqueOrThrow *before*
+ * running their authorization check, so "this id doesn't exist" and
+ * "this id exists but you can't see it" surfaced as two different
+ * exception types to anything calling the action directly rather than
+ * through a page that happens to mask the distinction.
+ */
+export function requireFound<T>(
+  record: T | null | undefined,
+  message = "Not found, or you don't have access to it.",
+): T {
+  if (!record) {
+    throw new AuthorizationError(message);
+  }
+  return record;
+}
+
+/**
  * The most common relationship check in this app: a user can act on their
  * own record unconditionally, or an elevated role can act on anyone's.
  * Phase 1's "patient can view their own appointment, staff can view any

@@ -32,6 +32,30 @@ export async function listUsersForUser(user: SessionUser) {
   });
 }
 
+/**
+ * Neither deactivation nor password reset has any concept of an admin
+ * hierarchy today (RoleName has two admin tiers, HOSPITAL_ADMIN and
+ * SYSTEM_ADMIN, with no ordering enforced anywhere else), so the
+ * simplest safe rule is: no admin action through these two functions
+ * can target another admin account at all, regardless of tier.
+ */
+async function assertTargetIsNotAdmin(targetUserId: string) {
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { roles: { select: { role: { select: { name: true } } } } },
+  });
+  const isAdmin = target?.roles.some((r) =>
+    (["HOSPITAL_ADMIN", "SYSTEM_ADMIN"] as const).includes(
+      r.role.name as "HOSPITAL_ADMIN" | "SYSTEM_ADMIN",
+    ),
+  );
+  if (isAdmin) {
+    throw new AuthorizationError(
+      "You cannot do this to another admin account.",
+    );
+  }
+}
+
 export async function deactivateUserForUser(
   user: SessionUser,
   targetUserId: string,
@@ -41,6 +65,7 @@ export async function deactivateUserForUser(
   if (user.id === targetUserId) {
     throw new AuthorizationError("You cannot deactivate your own account.");
   }
+  await assertTargetIsNotAdmin(targetUserId);
 
   const updated = await prisma.user.update({
     where: { id: targetUserId },
@@ -80,6 +105,7 @@ export async function resetPasswordForUser(
       "You cannot reset your own password this way.",
     );
   }
+  await assertTargetIsNotAdmin(targetUserId);
 
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);

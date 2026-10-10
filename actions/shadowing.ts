@@ -7,6 +7,7 @@ import {
   requireRole,
   hasRole,
   hasAnyRole,
+  requireFound,
   AuthorizationError,
   type SessionUser,
 } from "@/lib/permissions";
@@ -32,9 +33,9 @@ async function assertCanManageShadowing(
   appointmentId: string,
 ) {
   requireRole(user, "DOCTOR");
-  const appointment = await prisma.appointment.findUniqueOrThrow({
-    where: { id: appointmentId },
-  });
+  const appointment = requireFound(
+    await prisma.appointment.findUnique({ where: { id: appointmentId } }),
+  );
   const owns = await isAssignedDoctor(user, appointment.doctorId);
   if (!owns) {
     throw new AuthorizationError(

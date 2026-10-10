@@ -8,6 +8,7 @@ import {
   requireRole,
   hasRole,
   hasAnyRole,
+  requireFound,
   AuthorizationError,
   type SessionUser,
 } from "@/lib/permissions";
@@ -119,10 +120,13 @@ export async function getAppointmentForUser(
   user: SessionUser,
   appointmentId: string,
 ) {
-  const appointment = await prisma.appointment.findUniqueOrThrow({
-    where: { id: appointmentId },
-    include: appointmentInclude,
-  });
+  const appointment = requireFound(
+    await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: appointmentInclude,
+    }),
+    "You don't have access to this appointment.",
+  );
 
   const isAdmin = hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"]);
   const [assignedDoctor, owningPatient] = await Promise.all([
@@ -194,8 +198,15 @@ export async function requestAppointmentForUser(
 
   const [patientProfile, doctor] = await Promise.all([
     prisma.patientProfile.findUniqueOrThrow({ where: { userId: user.id } }),
-    prisma.doctorProfile.findUniqueOrThrow({ where: { id: data.doctorId } }),
+    prisma.doctorProfile.findUniqueOrThrow({
+      where: { id: data.doctorId },
+      include: { user: { select: { isActive: true } } },
+    }),
   ]);
+
+  if (!doctor.user.isActive) {
+    throw new Error("This doctor is not currently available for booking.");
+  }
 
   const appointment = await prisma.appointment.create({
     data: {
@@ -245,13 +256,15 @@ export async function updateAppointmentStatusForUser(
   appointmentId: string,
   newStatus: AppointmentStatus,
 ) {
-  const appointment = await prisma.appointment.findUniqueOrThrow({
-    where: { id: appointmentId },
-    include: {
-      patient: { select: { userId: true } },
-      doctor: { select: { userId: true } },
-    },
-  });
+  const appointment = requireFound(
+    await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        patient: { select: { userId: true } },
+        doctor: { select: { userId: true } },
+      },
+    }),
+  );
 
   const allowedNext = ALLOWED_TRANSITIONS[appointment.status];
   if (!allowedNext.includes(newStatus)) {
