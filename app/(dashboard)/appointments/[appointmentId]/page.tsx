@@ -30,7 +30,24 @@ async function AppointmentDetailContent({
   // A record that doesn't exist and one that exists-but-is-forbidden both
   // render the same "not found" page -- not distinguishing the two avoids
   // leaking which appointments exist to someone who can't see them.
-  const data = await getAppointmentRecords(appointmentId).catch(() => null);
+  //
+  // All three fetches run together rather than one-after-another --
+  // listShadowingForAppointment and listShadowableStudents don't depend
+  // on getAppointmentRecords' result, they independently re-check the
+  // same underlying access rule. Sequencing them added a whole extra
+  // network round trip to Neon before the page could render anything,
+  // which (combined with React's transition semantics keeping the old
+  // UI on screen during a refresh) made a just-saved change take
+  // noticeably longer than necessary to visibly appear. listShadowing
+  // ForAppointment gets its own `.catch(() => [])` here (it previously
+  // had none) purely so an unauthorized caller resolves safely instead
+  // of rejecting mid-Promise.all -- the notFound() below is still what
+  // actually decides access, driven by `data` alone.
+  const [data, shadowingAssignments, shadowableStudents] = await Promise.all([
+    getAppointmentRecords(appointmentId).catch(() => null),
+    listShadowingForAppointment(appointmentId).catch(() => []),
+    listShadowableStudents(appointmentId).catch(() => null),
+  ]);
   if (!data) notFound();
 
   const {
@@ -43,13 +60,6 @@ async function AppointmentDetailContent({
     testOrders,
   } = data;
 
-  // listShadowableStudents only succeeds for the assigned, supervising
-  // doctor -- its own failure is how we know whether to show the "assign"
-  // control, rather than duplicating that eligibility check here.
-  const [shadowingAssignments, shadowableStudents] = await Promise.all([
-    listShadowingForAppointment(appointmentId),
-    listShadowableStudents(appointmentId).catch(() => null),
-  ]);
   const canManageShadowing = shadowableStudents !== null;
 
   return (

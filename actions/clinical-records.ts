@@ -81,7 +81,23 @@ export async function getAppointmentRecordsForUser(
   const { appointment, canEdit, isShadowingStudent } =
     await getAppointmentForUser(user, appointmentId);
 
-  const [notes, diagnoses] = await Promise.all([
+  // All four queries are independent of each other -- only whether the
+  // prescription/testOrder ones run at all depends on isShadowingStudent,
+  // not on the notes/diagnoses results -- so they run in a single
+  // Promise.all rather than two sequential round trips. Found while
+  // writing Phase 4 Stage 3's E2E tests: two sequential network round
+  // trips to Neon on top of everything else this page fetches was slow
+  // enough that, combined with how React's startTransition keeps
+  // showing the pre-mutation UI until the refreshed render is fully
+  // ready, a just-added record could take several real seconds to
+  // visibly appear after a save -- not a caching bug, just avoidable
+  // sequential latency.
+  //
+  // A shadowing student gets notes + diagnosis only, per the explicit
+  // scoping decision in docs/architecture.md -- prescriptions and test
+  // results are never even queried for this case, not just hidden in the
+  // UI, so there's nothing to leak if a later change forgets to filter.
+  const [notes, diagnoses, prescriptions, testOrders] = await Promise.all([
     prisma.clinicalNote.findMany({
       where: { appointmentId },
       include: authorInclude,
@@ -92,26 +108,21 @@ export async function getAppointmentRecordsForUser(
       include: authorInclude,
       orderBy: { createdAt: "desc" },
     }),
-  ]);
-
-  // A shadowing student gets notes + diagnosis only, per the explicit
-  // scoping decision in docs/architecture.md -- prescriptions and test
-  // results are never even queried for this case, not just hidden in the
-  // UI, so there's nothing to leak if a later change forgets to filter.
-  const [prescriptions, testOrders] = isShadowingStudent
-    ? [[], []]
-    : await Promise.all([
-        prisma.prescription.findMany({
+    isShadowingStudent
+      ? Promise.resolve([])
+      : prisma.prescription.findMany({
           where: { appointmentId },
           include: authorInclude,
           orderBy: { createdAt: "desc" },
         }),
-        prisma.testOrder.findMany({
+    isShadowingStudent
+      ? Promise.resolve([])
+      : prisma.testOrder.findMany({
           where: { appointmentId },
           include: { ...authorInclude, result: true },
           orderBy: { orderedAt: "desc" },
         }),
-      ]);
+  ]);
 
   return {
     appointment,
