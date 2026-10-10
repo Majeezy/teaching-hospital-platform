@@ -9,7 +9,7 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 4 (Harden & ship), Stage 3.
+**Status:** 🚧 In active development — Phase 4 (Harden & ship), Stage 4.
 
 ## Database
 
@@ -116,7 +116,7 @@ the integration tests.
 - [x] Phase 4, Stage 1 — Admin-assisted password reset
 - [x] Phase 4, Stage 2 — Security review & hardening
 - [x] Phase 4, Stage 3 — E2E tests (Playwright)
-- [ ] Phase 4, Stage 4 — UI/UX polish
+- [x] Phase 4, Stage 4 — UI/UX polish
 - [ ] Phase 4, Stage 5 — Deployment hardening
 - [ ] Phase 4, Stage 6 — Finish docs
 
