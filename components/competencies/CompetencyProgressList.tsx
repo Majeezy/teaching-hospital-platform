@@ -42,12 +42,12 @@ export function CompetencyProgressList({
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {entry.competency.description && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 {entry.competency.description}
               </p>
             )}
             {entry.assessments.length === 0 ? (
-              <p className="text-sm text-zinc-500">Not yet assessed.</p>
+              <p className="text-sm text-muted-foreground">Not yet assessed.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {entry.assessments.map((assessment) => (
@@ -56,9 +56,9 @@ export function CompetencyProgressList({
                       Score {assessment.score}/5 — {assessment.assessedBy.name}
                     </p>
                     {assessment.notes && (
-                      <p className="text-zinc-500">{assessment.notes}</p>
+                      <p className="text-muted-foreground">{assessment.notes}</p>
                     )}
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       {formatDateTime(assessment.assessedAt)}
                     </p>
                   </div>

@@ -13,7 +13,7 @@ export function StudentSelector({
 }) {
   if (students.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted-foreground">
         No students placed under you yet.
       </p>
     );

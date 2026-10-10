@@ -13,13 +13,13 @@ export function StatTile({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-zinc-500">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {label}
         </CardTitle>
-        <Icon size={16} className="text-zinc-400" />
+        <Icon size={16} className="text-primary" />
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
+        <p className="font-heading text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
   );

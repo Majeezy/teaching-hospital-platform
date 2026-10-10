@@ -76,7 +76,7 @@ async function AppointmentDetailContent({
         </Link>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="font-heading text-2xl font-semibold">
             {appointment.patient.user.name} with Dr.{" "}
             {appointment.doctor.user.name}
           </h1>

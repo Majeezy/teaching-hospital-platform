@@ -76,7 +76,7 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
             <TableRow>
               <TableCell
                 colSpan={7}
-                className="text-center text-sm text-zinc-500"
+                className="text-center text-sm text-muted-foreground"
               >
                 No patients registered yet.
               </TableCell>
@@ -85,7 +85,7 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
           {patients.map((patient) => (
             <TableRow key={patient.id}>
               <TableCell className="font-medium">{patient.name}</TableCell>
-              <TableCell className="text-zinc-500">
+              <TableCell className="text-muted-foreground">
                 {patient.email}
               </TableCell>
               <TableCell>

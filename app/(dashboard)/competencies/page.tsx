@@ -36,7 +36,7 @@ async function CompetenciesContent({
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold">Competencies</h1>
+          <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Your progress against the core competency catalog.
           </p>
@@ -51,7 +51,7 @@ async function CompetenciesContent({
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold">Competencies</h1>
+          <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Every student&rsquo;s competency progress, system-wide.
           </p>
@@ -76,7 +76,7 @@ async function CompetenciesContent({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Competencies</h1>
+        <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Track and assess your students&rsquo; competency progress.
         </p>

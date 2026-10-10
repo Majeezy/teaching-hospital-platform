@@ -32,7 +32,7 @@ export function ActivitiesTable({ activities }: { activities: Activity[] }) {
             <TableRow>
               <TableCell
                 colSpan={5}
-                className="text-center text-sm text-zinc-500"
+                className="text-center text-sm text-muted-foreground"
               >
                 No learning activities yet.
               </TableCell>
@@ -50,7 +50,7 @@ export function ActivitiesTable({ activities }: { activities: Activity[] }) {
               </TableCell>
               <TableCell>{activity.student.user.name}</TableCell>
               <TableCell>Dr. {activity.supervisor.user.name}</TableCell>
-              <TableCell className="text-sm text-zinc-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {activity.dueDate
                   ? formatDate(activity.dueDate)
                   : "—"}

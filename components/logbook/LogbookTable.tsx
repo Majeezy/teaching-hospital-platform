@@ -30,7 +30,7 @@ export function LogbookTable({ entries }: { entries: LogbookEntry[] }) {
             <TableRow>
               <TableCell
                 colSpan={5}
-                className="text-center text-sm text-zinc-500"
+                className="text-center text-sm text-muted-foreground"
               >
                 No clinical hours logged yet.
               </TableCell>
@@ -46,13 +46,13 @@ export function LogbookTable({ entries }: { entries: LogbookEntry[] }) {
                   {entry.type.replace(/_/g, " ")}
                 </Badge>
               </TableCell>
-              <TableCell className="text-sm text-zinc-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {entry.relatedAppointment
                   ? `${formatDate(entry.relatedAppointment.scheduledAt)} with Dr. ${entry.relatedAppointment.doctor.user.name}`
                   : "—"}
               </TableCell>
               <TableCell>{Number(entry.hours).toFixed(1)}</TableCell>
-              <TableCell className="text-sm text-zinc-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {formatDate(entry.loggedAt)}
               </TableCell>
             </TableRow>

@@ -13,9 +13,9 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
     <p className="flex items-center justify-between text-sm">
       <span className="font-medium">
         {appointment.patient.user.name}
-        <span className="text-zinc-500"> — Dr. {appointment.doctor.user.name}</span>
+        <span className="text-muted-foreground"> — Dr. {appointment.doctor.user.name}</span>
       </span>
-      <span className="text-zinc-500">
+      <span className="text-muted-foreground">
         {formatDateTime(appointment.scheduledAt)}
       </span>
     </p>
@@ -47,7 +47,7 @@ export function NurseDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.todaysAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">Nothing scheduled today.</p>
+              <p className="text-sm text-muted-foreground">Nothing scheduled today.</p>
             )}
             {data.todaysAppointments.map((appointment) => (
               <Link key={appointment.id} href={`/appointments/${appointment.id}`}>
@@ -63,7 +63,7 @@ export function NurseDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.upcomingAppointments.length === 0 && (
-              <p className="text-sm text-zinc-500">Nothing else upcoming.</p>
+              <p className="text-sm text-muted-foreground">Nothing else upcoming.</p>
             )}
             {data.upcomingAppointments.map((appointment) => (
               <Link key={appointment.id} href={`/appointments/${appointment.id}`}>
@@ -82,7 +82,7 @@ export function NurseDashboard({ data }: { data: Data }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {data.recentCompleted.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 No completed appointments yet.
               </p>
             )}
