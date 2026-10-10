@@ -4,7 +4,7 @@ import { PatientsTable } from "@/components/admin/PatientsTable";
 
 export default function PatientsPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <PatientsContent />
     </Suspense>
   );
@@ -17,7 +17,7 @@ async function PatientsContent() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Patients</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Patients register themselves and manage their own profile details.
         </p>
       </div>

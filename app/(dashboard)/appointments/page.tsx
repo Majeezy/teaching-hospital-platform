@@ -6,7 +6,7 @@ import { RequestAppointmentDialog } from "@/components/appointments/RequestAppoi
 
 export default function AppointmentsPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <AppointmentsContent />
     </Suspense>
   );
@@ -27,7 +27,7 @@ async function AppointmentsContent() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-semibold">Appointments</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {isPatient
               ? "Your appointments."
               : "Appointments you're involved in."}

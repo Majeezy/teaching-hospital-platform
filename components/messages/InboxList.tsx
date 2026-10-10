@@ -24,7 +24,7 @@ export function InboxList({ messages }: { messages: Message[] }) {
   }
 
   if (messages.length === 0) {
-    return <p className="text-sm text-zinc-500">Nothing in your inbox.</p>;
+    return <p className="text-sm text-muted-foreground">Nothing in your inbox.</p>;
   }
 
   return (
@@ -39,19 +39,19 @@ export function InboxList({ messages }: { messages: Message[] }) {
           >
             <span className="flex items-center gap-2">
               {!message.readAt && (
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
               )}
               <span className="font-medium">{message.sender.name}</span>
               {message.subject && (
-                <span className="text-zinc-500">— {message.subject}</span>
+                <span className="text-muted-foreground">— {message.subject}</span>
               )}
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               {formatDateTime(message.sentAt)}
             </span>
           </button>
           {openId === message.id && (
-            <p className="border-t px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="border-t px-3 py-2 text-sm text-muted-foreground">
               {message.body}
             </p>
           )}

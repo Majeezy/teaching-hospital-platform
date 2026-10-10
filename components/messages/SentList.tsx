@@ -5,7 +5,7 @@ type Message = Awaited<ReturnType<typeof listSentForUser>>[number];
 
 export function SentList({ messages }: { messages: Message[] }) {
   if (messages.length === 0) {
-    return <p className="text-sm text-zinc-500">You haven&rsquo;t sent any messages.</p>;
+    return <p className="text-sm text-muted-foreground">You haven&rsquo;t sent any messages.</p>;
   }
 
   return (
@@ -16,14 +16,14 @@ export function SentList({ messages }: { messages: Message[] }) {
             <span>
               <span className="font-medium">To {message.recipient.name}</span>
               {message.subject && (
-                <span className="text-zinc-500"> — {message.subject}</span>
+                <span className="text-muted-foreground"> — {message.subject}</span>
               )}
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               {formatDateTime(message.sentAt)}
             </span>
           </div>
-          <p className="mt-1 text-zinc-600 dark:text-zinc-400">{message.body}</p>
+          <p className="mt-1 text-muted-foreground">{message.body}</p>
         </div>
       ))}
     </div>

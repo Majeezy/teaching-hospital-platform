@@ -5,7 +5,7 @@ import { LogbookTable } from "@/components/logbook/LogbookTable";
 
 export default function LogbookPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <LogbookContent />
     </Suspense>
   );
@@ -26,14 +26,14 @@ async function LogbookContent() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Clinical Logbook</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           {isAdmin
             ? "Every clinical hour logged across the platform."
             : isDoctor
               ? "Hours your shadowing students logged on your appointments."
               : "Your clinical hours, logged automatically."}
         </p>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Entries are created automatically when a shadowed appointment is
           marked completed -- there&rsquo;s no manual entry here.
         </p>

@@ -379,30 +379,33 @@ export async function getActivityForUser(
   user: SessionUser,
   activityId: string,
 ) {
-  const activity = requireFound(
-    await prisma.learningActivity.findUnique({
+  // The activity fetch and the role-specific profile lookup don't
+  // depend on each other -- which profile to fetch is already known
+  // from the session's roles, not from anything the activity query
+  // returns -- so they run together rather than two sequential Neon
+  // round trips. Found live: after a supervisor records feedback,
+  // router.refresh() calls this on the way back, and the page sat on
+  // "Saving…" for several real seconds even though the mutation (and
+  // its toast) had already completed -- the same class of bug fixed
+  // for appointments in Phase 4 Stage 3, just never applied here.
+  const [activityResult, doctorProfile, studentProfile] = await Promise.all([
+    prisma.learningActivity.findUnique({
       where: { id: activityId },
       include: activityInclude,
     }),
-  );
+    hasRole(user, "DOCTOR")
+      ? prisma.doctorProfile.findUnique({ where: { userId: user.id } })
+      : Promise.resolve(null),
+    hasRole(user, "STUDENT")
+      ? prisma.studentProfile.findUnique({ where: { userId: user.id } })
+      : Promise.resolve(null),
+  ]);
+
+  const activity = requireFound(activityResult);
 
   const isAdmin = hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"]);
-
-  let isAssigningSupervisor = false;
-  if (hasRole(user, "DOCTOR")) {
-    const doctorProfile = await prisma.doctorProfile.findUnique({
-      where: { userId: user.id },
-    });
-    isAssigningSupervisor = doctorProfile?.id === activity.supervisorId;
-  }
-
-  let isOwningStudent = false;
-  if (hasRole(user, "STUDENT")) {
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: user.id },
-    });
-    isOwningStudent = studentProfile?.id === activity.studentId;
-  }
+  const isAssigningSupervisor = doctorProfile?.id === activity.supervisorId;
+  const isOwningStudent = studentProfile?.id === activity.studentId;
 
   if (!isAdmin && !isAssigningSupervisor && !isOwningStudent) {
     throw new AuthorizationError("You don't have access to this activity.");
