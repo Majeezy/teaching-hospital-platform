@@ -9,7 +9,7 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 4 (Harden & ship), Stage 2.
+**Status:** 🚧 In active development — Phase 4 (Harden & ship), Stage 3.
 
 ## Database
 
@@ -76,6 +76,21 @@ clean up after themselves. No mocking the database: these tests exist
 specifically to catch real authorization bugs ("can a patient deactivate
 another user?"), which a mocked Prisma client can't meaningfully verify.
 
+```bash
+npm run test:e2e
+```
+
+End-to-end tests (`tests/e2e/`, Playwright) drive a real, built app in a
+real browser through its critical journeys — login, a patient booking and
+a doctor completing an appointment with clinical records, a supervisor
+assigning shadowing through to a student's reflection and feedback, and
+admin account provisioning including a password reset. These exist for
+what the tests above structurally can't catch: a button whose `onClick`
+silently does nothing, a crash that only happens in a browser console.
+Runs against `next build && next start`, not `next dev` — real Neon
+network latency is generous-timeout territory here too, same reasoning as
+the integration tests.
+
 ## Build log
 
 - [x] Phase 0, Stage 1 — Project setup, GitHub + Vercel pipeline
@@ -100,7 +115,7 @@ another user?"), which a mocked Prisma client can't meaningfully verify.
 - [x] Phase 3, Stage 4 — Dashboard polish (Nurse dashboard)
 - [x] Phase 4, Stage 1 — Admin-assisted password reset
 - [x] Phase 4, Stage 2 — Security review & hardening
-- [ ] Phase 4, Stage 3 — E2E tests (Playwright)
+- [x] Phase 4, Stage 3 — E2E tests (Playwright)
 - [ ] Phase 4, Stage 4 — UI/UX polish
 - [ ] Phase 4, Stage 5 — Deployment hardening
 - [ ] Phase 4, Stage 6 — Finish docs
