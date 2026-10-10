@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deactivateUser } from "@/actions/users";
+import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import type { listPatientsForUser } from "@/actions/patients";
 
 type Patient = Awaited<ReturnType<typeof listPatientsForUser>>[number];
@@ -67,7 +68,7 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
             <TableHead>Blood type</TableHead>
             <TableHead>Allergies</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-28" />
+            <TableHead className="w-48" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,14 +108,20 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
               </TableCell>
               <TableCell>
                 {patient.isActive && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={isPending}
-                    onClick={() => handleDeactivate(patient)}
-                  >
-                    Deactivate
-                  </Button>
+                  <div className="flex items-center justify-end gap-1">
+                    <ResetPasswordButton
+                      userId={patient.id}
+                      userName={patient.name}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => handleDeactivate(patient)}
+                    >
+                      Deactivate
+                    </Button>
+                  </div>
                 )}
               </TableCell>
             </TableRow>

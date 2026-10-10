@@ -39,6 +39,7 @@ import {
   type listStaffForUser,
 } from "@/actions/staff";
 import { deactivateUser } from "@/actions/users";
+import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 type StaffMember = Awaited<ReturnType<typeof listStaffForUser>>[number];
 
@@ -147,7 +148,7 @@ export function StaffTable({
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-28" />
+              <TableHead className="w-48" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -186,13 +187,19 @@ export function StaffTable({
                   </TableCell>
                   <TableCell>
                     {member.isActive && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeactivate(member)}
-                      >
-                        Deactivate
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <ResetPasswordButton
+                          userId={member.id}
+                          userName={member.name}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeactivate(member)}
+                        >
+                          Deactivate
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
