@@ -9,7 +9,10 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
-**Status:** 🚧 In active development — Phase 4 (Harden & ship), Stage 5.
+**Live demo:** [teaching-hospital-platform.vercel.app](https://teaching-hospital-platform.vercel.app)
+— sign in with the demo admin account below, or register as a patient.
+
+**Status:** ✅ All five phases complete (Phase 4, Stage 6 — Finish docs).
 
 ## Database
 
@@ -35,6 +38,9 @@ unrestricted access to a patient's full record.
 
 Full design rationale, the entity-relationship diagram, the permissions
 matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
+Deliberate scope cuts (no file uploads, no self-service password reset,
+no rate limiting, etc.) are listed explicitly in that document's
+[Known limitations](docs/architecture.md#known-limitations) section.
 
 ## Tech stack
 
@@ -43,7 +49,7 @@ matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
 - Auth.js (Credentials provider, JWT sessions with DB-checked revocation, bcrypt)
 - shadcn/ui, Recharts
 - Vitest + Playwright
-- Deployed on Vercel
+- Deployed on [Vercel](https://teaching-hospital-platform.vercel.app)
 
 ## Running locally
 
@@ -59,9 +65,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 **Demo admin account** (seeded, fictional — not a real credential, don't
 reuse this password anywhere real): `admin@teachinghospital.test` /
-`DemoAdmin123!`. Staff and student accounts are provisioned by an admin
-rather than self-registered, so this exists to bootstrap that — real
-admin-facing UI to provision other accounts lands in Phase 1.
+`DemoAdmin123!`. Staff and student accounts are provisioned by an admin,
+not self-registered — sign in with this account and use `/admin/staff` or
+`/admin/students` to create them.
 
 ## Testing
 
@@ -118,6 +124,7 @@ the integration tests.
 - [x] Phase 4, Stage 3 — E2E tests (Playwright)
 - [x] Phase 4, Stage 4 — UI/UX polish
 - [x] Phase 4, Stage 5 — Deployment hardening
-- [ ] Phase 4, Stage 6 — Finish docs
+- [x] Phase 4, Stage 6 — Finish docs
 
-See `docs/architecture.md` for what each phase actually contains.
+All five phases are complete. See `docs/architecture.md` for what each
+phase actually contains.
