@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { ACTIVITY_STATUS_VARIANT } from "@/lib/activity-status";
 import type { getStudentDashboardForUser } from "@/actions/dashboard";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 
 type Data = Awaited<ReturnType<typeof getStudentDashboardForUser>>;
 
@@ -58,7 +59,7 @@ export function StudentDashboard({ data }: { data: Data }) {
                   <p className="text-zinc-500">
                     Dr. {activity.supervisor.user.name}
                     {activity.dueDate &&
-                      ` — due ${new Date(activity.dueDate).toLocaleDateString()}`}
+                      ` — due ${formatDate(activity.dueDate)}`}
                   </p>
                 </div>
                 <Badge variant={ACTIVITY_STATUS_VARIANT[activity.status]}>
@@ -89,7 +90,7 @@ export function StudentDashboard({ data }: { data: Data }) {
                 </p>
                 <p className="text-zinc-500">
                   {assignment.appointment.department.name} —{" "}
-                  {new Date(assignment.appointment.scheduledAt).toLocaleString()}
+                  {formatDateTime(assignment.appointment.scheduledAt)}
                 </p>
               </div>
             ))}
@@ -114,8 +115,8 @@ export function StudentDashboard({ data }: { data: Data }) {
                   Supervised by Dr. {data.currentPlacement.supervisor.user.name}
                 </p>
                 <p className="text-zinc-500">
-                  {new Date(data.currentPlacement.startDate).toLocaleDateString()}{" "}
-                  – {new Date(data.currentPlacement.endDate).toLocaleDateString()}
+                  {formatDate(data.currentPlacement.startDate)}{" "}
+                  – {formatDate(data.currentPlacement.endDate)}
                 </p>
               </div>
             ) : (

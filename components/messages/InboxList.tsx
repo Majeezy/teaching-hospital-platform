@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markMessageRead, type listInboxForUser } from "@/actions/messages";
+import { formatDateTime } from "@/lib/format-date";
 
 type Message = Awaited<ReturnType<typeof listInboxForUser>>[number];
 
@@ -46,7 +47,7 @@ export function InboxList({ messages }: { messages: Message[] }) {
               )}
             </span>
             <span className="text-xs text-zinc-500">
-              {new Date(message.sentAt).toLocaleString()}
+              {formatDateTime(message.sentAt)}
             </span>
           </button>
           {openId === message.id && (

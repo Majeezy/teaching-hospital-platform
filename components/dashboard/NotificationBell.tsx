@@ -14,6 +14,7 @@ import {
   markNotificationRead,
   type listNotificationsForUser,
 } from "@/actions/notifications";
+import { formatDateTime } from "@/lib/format-date";
 
 type Notification = Awaited<ReturnType<typeof listNotificationsForUser>>[number];
 
@@ -97,7 +98,7 @@ export function NotificationBell({
               </span>
               <span className="text-zinc-500">{notification.body}</span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {new Date(notification.createdAt).toLocaleString()}
+                {formatDateTime(notification.createdAt)}
               </span>
             </button>
           ))}

@@ -3,6 +3,7 @@ import { CalendarClock, Clock, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatTile } from "@/components/dashboard/StatTile";
 import type { getNurseDashboardForUser } from "@/actions/dashboard";
+import { formatDateTime } from "@/lib/format-date";
 
 type Data = Awaited<ReturnType<typeof getNurseDashboardForUser>>;
 type Appointment = Data["todaysAppointments"][number];
@@ -15,7 +16,7 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
         <span className="text-zinc-500"> — Dr. {appointment.doctor.user.name}</span>
       </span>
       <span className="text-zinc-500">
-        {new Date(appointment.scheduledAt).toLocaleString()}
+        {formatDateTime(appointment.scheduledAt)}
       </span>
     </p>
   );

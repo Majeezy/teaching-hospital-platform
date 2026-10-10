@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { listPlacementsForUser } from "@/actions/placements";
+import { formatDate } from "@/lib/format-date";
 
 type Placement = Awaited<ReturnType<typeof listPlacementsForUser>>[number];
 
@@ -46,8 +47,8 @@ export function PlacementsTable({ placements }: { placements: Placement[] }) {
               <TableCell>Dr. {placement.supervisor.user.name}</TableCell>
               <TableCell>{placement.department.name}</TableCell>
               <TableCell className="text-sm text-zinc-500">
-                {new Date(placement.startDate).toLocaleDateString()} –{" "}
-                {new Date(placement.endDate).toLocaleDateString()}
+                {formatDate(placement.startDate)} –{" "}
+                {formatDate(placement.endDate)}
               </TableCell>
               <TableCell>
                 <Badge

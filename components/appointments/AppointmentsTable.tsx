@@ -20,6 +20,7 @@ import {
   type listAppointmentsForUser,
 } from "@/actions/appointments";
 import { STATUS_VARIANT } from "@/lib/appointment-status";
+import { formatDateTime } from "@/lib/format-date";
 
 type Appointment = Awaited<ReturnType<typeof listAppointmentsForUser>>[number];
 
@@ -136,7 +137,7 @@ export function AppointmentsTable({
                   {appointment.department.name}
                 </TableCell>
                 <TableCell>
-                  {new Date(appointment.scheduledAt).toLocaleString()}
+                  {formatDateTime(appointment.scheduledAt)}
                 </TableCell>
                 <TableCell>
                   <Badge variant={STATUS_VARIANT[appointment.status]}>

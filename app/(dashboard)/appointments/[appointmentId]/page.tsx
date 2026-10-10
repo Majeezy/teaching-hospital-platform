@@ -9,6 +9,7 @@ import {
 } from "@/actions/shadowing";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_VARIANT } from "@/lib/appointment-status";
+import { formatDateTime } from "@/lib/format-date";
 import { ClinicalRecordsPanel } from "@/components/appointments/ClinicalRecordsPanel";
 import { ShadowingPanel } from "@/components/appointments/ShadowingPanel";
 
@@ -87,7 +88,7 @@ async function AppointmentDetailContent({
         </div>
         <p className="mt-1 text-sm text-zinc-500">
           {appointment.department.name} —{" "}
-          {new Date(appointment.scheduledAt).toLocaleString()}
+          {formatDateTime(appointment.scheduledAt)}
         </p>
         {appointment.reason && (
           <p className="mt-2 text-sm">Reason: {appointment.reason}</p>

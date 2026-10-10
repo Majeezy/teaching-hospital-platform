@@ -24,6 +24,7 @@ import {
   addTestResult,
   type getAppointmentRecordsForUser,
 } from "@/actions/clinical-records";
+import { formatDateTime } from "@/lib/format-date";
 
 type Records = Awaited<ReturnType<typeof getAppointmentRecordsForUser>>;
 
@@ -120,7 +121,7 @@ function SectionShell({
 function RecordMeta({ author, date }: { author: string; date: Date }) {
   return (
     <p className="text-xs text-zinc-500">
-      {author} — {new Date(date).toLocaleString()}
+      {author} — {formatDateTime(date)}
     </p>
   );
 }

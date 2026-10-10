@@ -3,6 +3,7 @@ import { CalendarClock, ClipboardCheck, Clock, History, Users2 } from "lucide-re
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatTile } from "@/components/dashboard/StatTile";
 import type { getDoctorDashboardForUser } from "@/actions/dashboard";
+import { formatDateTime } from "@/lib/format-date";
 
 type Data = Awaited<ReturnType<typeof getDoctorDashboardForUser>>;
 
@@ -16,7 +17,7 @@ function AppointmentRow({
   return (
     <p className="flex items-center justify-between text-sm">
       <span className="font-medium">{patientName}</span>
-      <span className="text-zinc-500">{new Date(when).toLocaleString()}</span>
+      <span className="text-zinc-500">{formatDateTime(when)}</span>
     </p>
   );
 }

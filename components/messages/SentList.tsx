@@ -1,4 +1,5 @@
 import type { listSentForUser } from "@/actions/messages";
+import { formatDateTime } from "@/lib/format-date";
 
 type Message = Awaited<ReturnType<typeof listSentForUser>>[number];
 
@@ -19,7 +20,7 @@ export function SentList({ messages }: { messages: Message[] }) {
               )}
             </span>
             <span className="text-xs text-zinc-500">
-              {new Date(message.sentAt).toLocaleString()}
+              {formatDateTime(message.sentAt)}
             </span>
           </div>
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">{message.body}</p>

@@ -28,6 +28,7 @@ import {
   type listShadowedAppointmentsForUser,
   type listSupervisedStudentsForUser,
 } from "@/actions/learning-activities";
+import { formatDateTime } from "@/lib/format-date";
 
 type Student = Awaited<ReturnType<typeof listSupervisedStudentsForUser>>[number];
 type ShadowedAppointment = Awaited<
@@ -153,7 +154,7 @@ export function AssignActivityDialog({ students }: { students: Student[] }) {
               <SelectContent>
                 {shadowedAppointments.map((appointment) => (
                   <SelectItem key={appointment.id} value={appointment.id}>
-                    {new Date(appointment.scheduledAt).toLocaleString()}
+                    {formatDateTime(appointment.scheduledAt)}
                     {appointment.reason ? ` — ${appointment.reason}` : ""}
                   </SelectItem>
                 ))}

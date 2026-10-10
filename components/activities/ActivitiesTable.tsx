@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ACTIVITY_STATUS_VARIANT } from "@/lib/activity-status";
 import type { listActivitiesForUser } from "@/actions/learning-activities";
+import { formatDate } from "@/lib/format-date";
 
 type Activity = Awaited<ReturnType<typeof listActivitiesForUser>>[number];
 
@@ -51,7 +52,7 @@ export function ActivitiesTable({ activities }: { activities: Activity[] }) {
               <TableCell>Dr. {activity.supervisor.user.name}</TableCell>
               <TableCell className="text-sm text-zinc-500">
                 {activity.dueDate
-                  ? new Date(activity.dueDate).toLocaleDateString()
+                  ? formatDate(activity.dueDate)
                   : "—"}
               </TableCell>
               <TableCell>

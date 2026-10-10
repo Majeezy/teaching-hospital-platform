@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_VARIANT } from "@/lib/appointment-status";
 import { StatTile } from "@/components/dashboard/StatTile";
 import type { getAdminDashboardForUser } from "@/actions/dashboard";
+import { formatDateTime } from "@/lib/format-date";
 
 type Data = Awaited<ReturnType<typeof getAdminDashboardForUser>>;
 
@@ -53,7 +54,7 @@ export function AdminDashboard({ data }: { data: Data }) {
                     {appointment.doctor.user.name}
                   </p>
                   <p className="text-zinc-500">
-                    {new Date(appointment.scheduledAt).toLocaleString()}
+                    {formatDateTime(appointment.scheduledAt)}
                   </p>
                 </div>
                 <Badge variant={STATUS_VARIANT[appointment.status]}>
@@ -79,7 +80,7 @@ export function AdminDashboard({ data }: { data: Data }) {
                 <span className="font-medium">{entry.actor.name}</span>{" "}
                 <span className="text-zinc-500">
                   {entry.action.replaceAll("_", " ").toLowerCase()} —{" "}
-                  {new Date(entry.createdAt).toLocaleString()}
+                  {formatDateTime(entry.createdAt)}
                 </span>
               </div>
             ))}

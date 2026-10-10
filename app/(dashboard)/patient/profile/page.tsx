@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/permissions";
 import { getMyProfile } from "@/actions/patients";
 import { ProfileForm } from "@/components/patient/ProfileForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate } from "@/lib/format-date";
 
 export default function ProfilePage() {
   return (
@@ -43,7 +44,7 @@ async function ProfileContent() {
           <div>
             <p className="text-zinc-500">Date of birth</p>
             <p>
-              {profile.dateOfBirth.toLocaleDateString()} ({age} years old)
+              {formatDate(profile.dateOfBirth)} ({age} years old)
             </p>
           </div>
         </CardContent>

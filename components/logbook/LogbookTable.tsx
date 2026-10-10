@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { listLogbookEntriesForUser } from "@/actions/logbook";
+import { formatDate } from "@/lib/format-date";
 
 type LogbookEntry = Awaited<ReturnType<typeof listLogbookEntriesForUser>>[number];
 
@@ -47,12 +48,12 @@ export function LogbookTable({ entries }: { entries: LogbookEntry[] }) {
               </TableCell>
               <TableCell className="text-sm text-zinc-500">
                 {entry.relatedAppointment
-                  ? `${new Date(entry.relatedAppointment.scheduledAt).toLocaleDateString()} with Dr. ${entry.relatedAppointment.doctor.user.name}`
+                  ? `${formatDate(entry.relatedAppointment.scheduledAt)} with Dr. ${entry.relatedAppointment.doctor.user.name}`
                   : "—"}
               </TableCell>
               <TableCell>{Number(entry.hours).toFixed(1)}</TableCell>
               <TableCell className="text-sm text-zinc-500">
-                {new Date(entry.loggedAt).toLocaleDateString()}
+                {formatDate(entry.loggedAt)}
               </TableCell>
             </TableRow>
           ))}

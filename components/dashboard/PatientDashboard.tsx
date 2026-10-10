@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_VARIANT } from "@/lib/appointment-status";
 import { StatTile } from "@/components/dashboard/StatTile";
 import type { getPatientDashboardForUser } from "@/actions/dashboard";
+import { formatDateTime } from "@/lib/format-date";
 
 type Data = Awaited<ReturnType<typeof getPatientDashboardForUser>>;
 
@@ -69,7 +70,7 @@ export function PatientDashboard({ data }: { data: Data }) {
                   </p>
                   <p className="text-zinc-500">
                     {appointment.department.name} —{" "}
-                    {new Date(appointment.scheduledAt).toLocaleString()}
+                    {formatDateTime(appointment.scheduledAt)}
                   </p>
                 </div>
                 <Badge variant={STATUS_VARIANT[appointment.status]}>
@@ -102,7 +103,7 @@ export function PatientDashboard({ data }: { data: Data }) {
                     Dr. {appointment.doctor.user.name}
                   </p>
                   <p className="text-zinc-500">
-                    {new Date(appointment.scheduledAt).toLocaleString()}
+                    {formatDateTime(appointment.scheduledAt)}
                   </p>
                 </div>
                 <Badge variant={STATUS_VARIANT[appointment.status]}>
