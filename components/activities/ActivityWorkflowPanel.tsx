@@ -22,6 +22,7 @@ import {
   submitReflection,
   type getActivityForUser,
 } from "@/actions/learning-activities";
+import { formatDateTime } from "@/lib/format-date";
 
 type ActivityData = Awaited<ReturnType<typeof getActivityForUser>>;
 
@@ -116,7 +117,7 @@ export function ActivityWorkflowPanel({
             <div className="rounded-md border p-3">
               <p className="text-sm">{reflection.content}</p>
               <p className="mt-1 text-xs text-zinc-500">
-                Submitted {new Date(reflection.submittedAt).toLocaleString()}
+                Submitted {formatDateTime(reflection.submittedAt)}
               </p>
             </div>
           ) : (
@@ -195,7 +196,7 @@ export function ActivityWorkflowPanel({
                   </p>
                 )}
                 <p className="mt-1 text-xs text-zinc-500">
-                  {new Date(entry.createdAt).toLocaleString()}
+                  {formatDateTime(entry.createdAt)}
                 </p>
               </div>
             ))

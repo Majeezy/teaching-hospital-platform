@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { listAllCompetencyProgressForUser } from "@/actions/competencies";
+import { formatDate } from "@/lib/format-date";
 
 type Row = Awaited<ReturnType<typeof listAllCompetencyProgressForUser>>[number];
 
@@ -42,7 +43,7 @@ export function AdminCompetencyTable({ rows }: { rows: Row[] }) {
               </TableCell>
               <TableCell className="text-sm text-zinc-500">
                 {row.lastAssessedAt
-                  ? new Date(row.lastAssessedAt).toLocaleDateString()
+                  ? formatDate(row.lastAssessedAt)
                   : "—"}
               </TableCell>
             </TableRow>

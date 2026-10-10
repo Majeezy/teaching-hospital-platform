@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { getStudentCompetencyProgressForUser } from "@/actions/competencies";
 import { RecordAssessmentDialog } from "@/components/competencies/RecordAssessmentDialog";
+import { formatDateTime } from "@/lib/format-date";
 
 type Progress = Awaited<
   ReturnType<typeof getStudentCompetencyProgressForUser>
@@ -58,7 +59,7 @@ export function CompetencyProgressList({
                       <p className="text-zinc-500">{assessment.notes}</p>
                     )}
                     <p className="text-xs text-zinc-500">
-                      {new Date(assessment.assessedAt).toLocaleString()}
+                      {formatDateTime(assessment.assessedAt)}
                     </p>
                   </div>
                 ))}

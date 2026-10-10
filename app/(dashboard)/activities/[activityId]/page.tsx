@@ -6,6 +6,7 @@ import { getActivity } from "@/actions/learning-activities";
 import { Badge } from "@/components/ui/badge";
 import { ACTIVITY_STATUS_VARIANT } from "@/lib/activity-status";
 import { ActivityWorkflowPanel } from "@/components/activities/ActivityWorkflowPanel";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 
 export default function ActivityDetailPage(
   props: PageProps<"/activities/[activityId]">,
@@ -53,13 +54,13 @@ async function ActivityDetailContent({
         <p className="mt-2 text-sm">{activity.description}</p>
         {activity.dueDate && (
           <p className="mt-1 text-sm text-zinc-500">
-            Due {new Date(activity.dueDate).toLocaleDateString()}
+            Due {formatDate(activity.dueDate)}
           </p>
         )}
         {activity.relatedAppointment && (
           <p className="mt-1 text-sm text-zinc-500">
             Related to the shadowed appointment on{" "}
-            {new Date(activity.relatedAppointment.scheduledAt).toLocaleString()}
+            {formatDateTime(activity.relatedAppointment.scheduledAt)}
             {activity.relatedAppointment.reason
               ? ` (${activity.relatedAppointment.reason})`
               : ""}
