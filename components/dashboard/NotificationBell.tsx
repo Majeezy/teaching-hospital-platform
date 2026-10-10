@@ -96,7 +96,7 @@ export function NotificationBell({
                 {notification.title}
               </span>
               <span className="text-zinc-500">{notification.body}</span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 {new Date(notification.createdAt).toLocaleString()}
               </span>
             </button>

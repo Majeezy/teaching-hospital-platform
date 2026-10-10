@@ -47,6 +47,7 @@ async function DashboardShell({ children }: { children: ReactNode }) {
           roles={user.roles}
           notifications={notifications}
           unreadCount={unreadCount}
+          unreadMessageCount={unreadMessageCount}
         />
         <main className="flex-1 p-4 md:p-8">{children}</main>
       </div>
