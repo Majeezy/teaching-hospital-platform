@@ -180,9 +180,11 @@ erDiagram
   STUDENT_PROFILE ||--o{ CLINICAL_LOGBOOK_ENTRY : logs
 ```
 
-*(Secondary tables — `Message`, `Document`, `Notification` — omitted from
-the diagram for legibility; they're simple FK-to-`User`/`Patient` tables
-described in prose above and in the schema file once Stage 2 lands.)*
+*(Secondary tables — `Message`, `Document`, `Notification`, `AuditLog` —
+omitted from the diagram for legibility; they're simple FK-to-`User`/
+`Patient` tables, described in `prisma/schema.prisma`. `Document` is the
+one table in this schema with no application code behind it at all —
+see [Known limitations](#known-limitations).)*
 
 ## 7. Technology stack
 
@@ -195,7 +197,7 @@ described in prose above and in the schema file once Stage 2 lands.)*
 | Auth | Auth.js (NextAuth v4), Credentials provider, **JWT sessions + DB-checked revocation**, bcrypt | See below. |
 | UI | Tailwind + shadcn/ui | shadcn components are copied into the repo, not installed as an opaque dependency — every dashboard/table/dialog used is code that can actually be read and modified. |
 | Charts | Recharts | Competency bars, admin dashboard metrics. |
-| Testing | Vitest (unit/integration) + Playwright (E2E) | |
+| Testing | Vitest (unit/integration) + Playwright (E2E) | Integration tests hit the real dev database directly — no mocked Prisma client — because the thing worth testing here is authorization logic, which a mock can't meaningfully verify. Playwright drives an actual browser against a production build for the handful of bugs (crashes, dialogs that never mount) no server-side test can see. |
 | Deployment | Vercel (app) + Neon (database) | Same as the portfolio; both have a real free tier. |
 
 ### Authentication, in full
@@ -235,6 +237,15 @@ and removed once this was confirmed; it isn't used.
 
 ## 8. Folder structure
 
+The structure below reflects the repo as it actually stands after all five
+phases, not the Phase 0 plan — a few things moved as the shape of the app
+became clearer (no `(auth)` route group ended up being necessary; `actions/`
+and `components/` both ended up with one file/folder per route area rather
+than the coarser domain grouping originally sketched; `database-schema.md`
+and `security.md` were never split out as separate files, since Sections
+4–6 and 10 of this one document already cover that ground without forcing
+a reader to jump between files).
+
 ```
 teaching-hospital-platform/
 ├─ prisma/
@@ -242,34 +253,44 @@ teaching-hospital-platform/
 │  ├─ seed.ts                  # fictional demo data generator
 │  └─ migrations/
 ├─ app/
-│  ├─ (auth)/login, register, reset-password
+│  ├─ page.tsx                  # landing page
+│  ├─ login/  register/
+│  ├─ error.tsx  not-found.tsx
 │  ├─ (dashboard)/
 │  │  ├─ layout.tsx             # role-aware sidebar + topbar shell
-│  │  ├─ admin/  doctor/  nurse/  student/  patient/
-│  ├─ api/auth/[...nextauth]/route.ts
-│  └─ layout.tsx
-├─ actions/                     # server actions, one file per domain
-│  ├─ patients.ts  appointments.ts  medical-records.ts
-│  ├─ students.ts  placements.ts  shadowing.ts
-│  ├─ learning-activities.ts  competencies.ts  feedback.ts
-│  └─ notifications.ts
+│  │  ├─ dashboard/  appointments/[appointmentId]/  activities/[activityId]/
+│  │  ├─ placements/  messages/  logbook/  competencies/  patient/profile/
+│  │  └─ admin/  departments/  staff/  patients/  students/
+│  └─ api/auth/[...nextauth]/route.ts
+├─ actions/                     # server actions, one file per route area
+│  ├─ auth.ts  users.ts  staff.ts  patients.ts  students.ts  departments.ts
+│  ├─ appointments.ts  clinical-records.ts
+│  ├─ placements.ts  shadowing.ts  learning-activities.ts  competencies.ts
+│  ├─ logbook.ts  dashboard.ts
+│  └─ notifications.ts  messages.ts  search.ts
 ├─ lib/
 │  ├─ auth.ts                   # Auth.js config
 │  ├─ permissions.ts            # the one place authorization logic lives
 │  ├─ audit.ts                  # audit log helper, called from every mutation
+│  ├─ notifications.ts          # notify() helper, mirrors audit.ts
 │  ├─ prisma.ts                 # Prisma client singleton
-│  └─ validation/                # zod schemas, one per domain
+│  ├─ password.ts  format-date.ts  appointment-status.ts  activity-status.ts
+│  └─ utils.ts
 ├─ components/
-│  ├─ ui/                        # shadcn primitives
-│  ├─ dashboard/                 # sidebar, topbar, nav
-│  └─ domain/                    # AppointmentCard, CompetencyBar, PatientTable…
+│  ├─ ui/                       # shadcn/Base UI primitives
+│  ├─ dashboard/                # sidebar, mobile nav, topbar, search, notifications
+│  └─ appointments/  activities/  admin/  competencies/  logbook/
+│     messages/  patient/  placements/   # one folder per route area, mirroring actions/
 ├─ tests/
 │  ├─ unit/  integration/  e2e/
 └─ docs/
-   ├─ architecture.md            # this document
-   ├─ database-schema.md
-   └─ security.md
+   └─ architecture.md            # this document
 ```
+
+Zod schemas live inline at the top of the action file that uses them, not
+in a separate `validation/` folder as originally planned — with one schema
+per server action and no schema ever shared across files, the extra
+indirection wasn't earning its keep.
 
 The split between `actions/` (what happens) and `lib/permissions.ts` (who's
 allowed) is the most important structural decision — every action file
@@ -278,40 +299,61 @@ reads the same way: check permission, validate input, do the thing, log it.
 ## 9. API / server action architecture
 
 One concrete example — *"a doctor adds a clinical note during an
-appointment"* — every mutation follows this shape:
+appointment"* — every mutation follows this shape. Each action module
+splits the work into a `*ForUser` function that takes a resolved session
+as a plain parameter (directly unit-testable, no request/cookies needed —
+see `tests/integration/`) and a thin `"use server"` wrapper that resolves
+the session and delegates:
 
 ```ts
-// actions/medical-records.ts
-export async function addClinicalNote(input: ClinicalNoteInput) {
-  const session = await getSession()                         // 1. who is this?
-  const appt = await prisma.appointment.findUniqueOrThrow(…)
-  assertCan(session.user, "create", "ClinicalNote", { appt }) // 2. allowed?
-  const data = clinicalNoteSchema.parse(input)                // 3. valid shape?
-
-  const note = await prisma.clinicalNote.create({ data: {     // 4. do it
-    ...data, patientId: appt.patientId, authorId: session.user.id,
+// actions/clinical-records.ts
+export async function addClinicalNoteForUser(
+  user: SessionUser,
+  input: AddClinicalNoteInput,
+) {
+  const data = addClinicalNoteSchema.parse(input)         // 1. valid shape?
+  const { appointment, canEdit } =
+    await getAppointmentForUser(user, data.appointmentId) // 2. exists, and allowed?
+  if (!canEdit) throw new AuthorizationError(…)            // relationship check,
+                                                            // not just "is a doctor"
+  const note = await prisma.clinicalNote.create({ data: {  // 3. do it
+    ...data, patientId: appointment.patientId, authorId: user.id,
   }})
 
-  await audit(session.user.id, "CREATED_CLINICAL_NOTE", note.id) // 5. log it
+  await audit({                                            // 4. log it
+    actorId: user.id,
+    action: "CREATED_CLINICAL_NOTE",
+    entityType: "ClinicalNote",
+    entityId: note.id,
+  })
   return note
+}
+
+export async function addClinicalNote(input: AddClinicalNoteInput) {
+  const user = await requireUser()
+  return addClinicalNoteForUser(user, input)
 }
 ```
 
-`assertCan` is where relationship-based authorization lives — it doesn't
-just check "is this a doctor," it checks "is this doctor the one assigned
-to this specific appointment." That's role-based access control versus the
-real thing: a Cardiology doctor should not be able to write a note on a
-Dermatology patient they've never seen.
+`getAppointmentForUser`'s own relationship check is where the real
+authorization lives — it doesn't just check "is this a doctor," it checks
+"is this doctor the one assigned to this specific appointment." That's
+role-based access control versus the real thing: a Cardiology doctor
+should not be able to write a note on a Dermatology patient they've never
+seen.
 
 Only a handful of Route Handlers exist outside this pattern: the Auth.js
-callback route (required by the library) and nothing else for v1.
+callback route (required by the library) and nothing else.
 
 ## 10. Security architecture
 
 - **Passwords** — bcrypt, never reversible, never logged, never returned
   from any query.
-- **Sessions** — database-backed via Auth.js's Prisma adapter; revocable by
-  deleting a row.
+- **Sessions** — JWT-based (see Section 7 for why database sessions
+  weren't an option with next-auth v4's Credentials provider), with the
+  `jwt` callback re-checking `isActive`/roles against the database on
+  every request — deactivating a user still revokes access on their very
+  next request, without a deletable session row.
 - **Authorization** — centralized in `lib/permissions.ts`, called at the
   top of every server action. The UI hides buttons a user can't use, but
   that's cosmetic — the server check is what's tested and what matters.
@@ -389,7 +431,7 @@ increment rather than a horizontal layer:
 | Stage | Contents |
 |---|---|
 | 1 | Dashboard shell (sidebar/topbar, role-aware nav) + shadcn/ui setup. First real feature: Department CRUD (admin-only) — proves the action → permission → audit → table → form pattern on the simplest possible domain object. |
-| 2 | Staff management: admin creates Doctor/Nurse accounts, views/deactivates staff. First real UI for Stage 0-4's `deactivateUser`. |
+| 2 | Staff management: admin creates Doctor/Nurse accounts, views/deactivates staff. First real UI for Phase 0 Stage 4's `deactivateUser`. |
 | 3 | Patient management: admin patient list; patient self-service profile (emergency contact, blood type, allergies — deliberately skipped at registration). Doctor/Nurse "my patients" scoping is *not* finished here — it's only meaningful once appointments exist. |
 | 4 | Appointments: booking (patient selects a doctor directly — see deviations), full status lifecycle, per-role list views. Establishes Doctor/Nurse patient scoping, since "assigned patients" is defined through appointments. |
 | 5 | Clinical records: notes, diagnoses, prescriptions, test orders/results, authored by the assigned doctor during/after an appointment. Admin is read-only here (oversight, not edit — the one entity in this app where admin doesn't have full access). Patients see their own records in full; `Document` (file uploads) deferred — no storage provider chosen, nothing else in this phase needs one. |
@@ -811,3 +853,72 @@ Phase 3 is now complete (Stages 1-4).
   `lib/format-date.ts` used everywhere a date is displayed. Re-ran the
   live smoke test after that fix shipped: every page checked, desktop
   and mobile, zero console errors.
+- Phase 4 Stage 6: final accuracy pass on this document and the
+  README. Section 8's folder structure was the one place real drift
+  had accumulated -- it was written during Phase 0 planning and never
+  revisited, so it still described an `(auth)` route group that was
+  never used, an `actions/` split by generic domain name rather than
+  route area, a `database-schema.md`/`security.md` split that never
+  happened (this document absorbed both instead), and a flat
+  `components/domain/` folder where one subfolder per route area
+  exists instead. Rewrote it to match the repo as it stands. Added the
+  [Known limitations](#known-limitations) section below, consolidating
+  scope cuts that were previously only mentioned in passing inside
+  individual phase/stage entries above -- the same decisions, just not
+  previously collected anywhere a reviewer could find them without
+  reading the entire build log.
+
+Phase 4 is now complete (Stages 1-6). All five phases are complete.
+
+## Known limitations
+
+Deliberate scope cuts, not gaps found late. Each one is a decision made
+explicitly somewhere in the build log above; collected here so a reviewer
+doesn't have to read the whole log to find them.
+
+- **No self-service password reset, no email delivery anywhere.** No email
+  provider has been chosen in this project at all. Password reset is
+  admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
+  admin-provisioned rather than self-registered; notifications (Phase 3
+  Stage 1) are in-app only, no email/push.
+- **`Document` (file uploads) is a fully migrated, completely unused
+  table.** It's in `schema.prisma` and the ERD from Phase 0, but no
+  action or UI was ever built against it (Phase 1 Stage 5) -- no storage
+  provider (S3, Vercel Blob, etc.) has been chosen, and nothing else in
+  the app needs one.
+- **No rate limiting anywhere** (login, registration) -- would need a new
+  external dependency (e.g. Upstash) for a single-instance portfolio
+  deployment with no existing abuse signal to justify it (Phase 4 Stage 2).
+- **No `reactivateUser` action** -- deactivating a user (Phase 1 Stage 2)
+  is currently irreversible through the UI; the only fix today is a
+  direct database update.
+- **No FK-conflict handling on department deletion** -- deleting a
+  department that still has staff or appointments referencing it throws a
+  raw Prisma constraint error instead of a friendly message (Phase 4
+  Stage 2). A UX gap, not a security one.
+- **Shadowing access is scoped to notes and diagnoses only**, never
+  prescriptions or test results (Phase 2 Stage 3) -- a deliberate reading
+  of the brief's "scoped, not full record parity" requirement, not an
+  oversight.
+- **Search has no detail page for Patients, Staff, Students, or
+  Doctors** -- only Appointments has one (Phase 3 Stage 3). Those
+  categories link to the existing list page instead, since no detail
+  route exists anywhere in the app for those entities.
+- **The clinical logbook only auto-generates one of its four entry
+  types** (`OBSERVED_CONSULTATION`) -- the other three
+  (`ENCOUNTER`, `EMERGENCY_OBSERVATION`, `PROCEDURE_OBSERVED`) would need
+  an appointment-type distinction that doesn't exist anywhere in the
+  schema (Phase 2 Stage 5).
+- **No generic `Permission` row-table** -- role and relationship checks
+  live in code (`lib/permissions.ts` and each action module), not as
+  configurable database rows. Simpler to read and test for an app whose
+  permission rules don't need to be admin-editable at runtime.
+- **JWT sessions, not true database sessions** -- next-auth v4's
+  Credentials provider doesn't support database sessions regardless of
+  configuration (Section 7). Revocability, the actual requirement behind
+  "database sessions," is preserved via a DB-fresh `isActive`/roles check
+  on every request instead.
+- **Single Neon database for both development and production** -- a
+  deliberate choice for a portfolio project with only fictional data;
+  nothing in this app would benefit from separate environments the way a
+  real multi-developer team's app would.
