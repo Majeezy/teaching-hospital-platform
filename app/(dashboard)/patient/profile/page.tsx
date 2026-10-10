@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/format-date";
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <ProfileContent />
     </Suspense>
   );
@@ -23,7 +23,7 @@ async function ProfileContent() {
     <div className="flex max-w-xl flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">My profile</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Keep your contact and medical information current.
         </p>
       </div>
@@ -34,15 +34,15 @@ async function ProfileContent() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-zinc-500">Name</p>
+            <p className="text-muted-foreground">Name</p>
             <p>{user.name}</p>
           </div>
           <div>
-            <p className="text-zinc-500">Email</p>
+            <p className="text-muted-foreground">Email</p>
             <p>{user.email}</p>
           </div>
           <div>
-            <p className="text-zinc-500">Date of birth</p>
+            <p className="text-muted-foreground">Date of birth</p>
             <p>
               {formatDate(profile.dateOfBirth)} ({age} years old)
             </p>

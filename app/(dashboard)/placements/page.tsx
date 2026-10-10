@@ -11,7 +11,7 @@ import { CreatePlacementDialog } from "@/components/placements/CreatePlacementDi
 
 export default function PlacementsPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <PlacementsContent />
     </Suspense>
   );
@@ -37,7 +37,7 @@ async function PlacementsContent() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-semibold">Clinical Placements</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {isAdmin
               ? "All student placements."
               : "Placements you're involved in."}

@@ -12,7 +12,7 @@ export default function ActivityDetailPage(
   props: PageProps<"/activities/[activityId]">,
 ) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <ActivityDetailContent params={props.params} />
     </Suspense>
   );
@@ -35,7 +35,7 @@ async function ActivityDetailContent({
       <div>
         <Link
           href="/activities"
-          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />
           All activities
@@ -47,18 +47,18 @@ async function ActivityDetailContent({
             {activity.status.replace("_", " ")}
           </Badge>
         </div>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           {activity.student.user.name} — supervised by Dr.{" "}
           {activity.supervisor.user.name}
         </p>
         <p className="mt-2 text-sm">{activity.description}</p>
         {activity.dueDate && (
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Due {formatDate(activity.dueDate)}
           </p>
         )}
         {activity.relatedAppointment && (
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Related to the shadowed appointment on{" "}
             {formatDateTime(activity.relatedAppointment.scheduledAt)}
             {activity.relatedAppointment.reason

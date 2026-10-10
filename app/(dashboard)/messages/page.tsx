@@ -13,7 +13,7 @@ import { cn } from "cn";
 
 export default function MessagesPage(props: PageProps<"/messages">) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <MessagesContent searchParams={props.searchParams} />
     </Suspense>
   );
@@ -36,7 +36,7 @@ async function MessagesContent({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-semibold">Messages</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Only people you have an existing relationship with -- your own
             doctor(s), your own supervisor(s), or fellow staff -- appear as
             recipients.
@@ -51,8 +51,8 @@ async function MessagesContent({
           className={cn(
             "flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium",
             tab === "inbox"
-              ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100",
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
           <Inbox size={14} />
@@ -66,8 +66,8 @@ async function MessagesContent({
           className={cn(
             "flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium",
             tab === "sent"
-              ? "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100",
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
           <Send size={14} />

@@ -17,7 +17,7 @@ export default function AppointmentDetailPage(
   props: PageProps<"/appointments/[appointmentId]">,
 ) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <AppointmentDetailContent params={props.params} />
     </Suspense>
   );
@@ -69,7 +69,7 @@ async function AppointmentDetailContent({
       <div>
         <Link
           href="/appointments"
-          className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />
           All appointments
@@ -87,7 +87,7 @@ async function AppointmentDetailContent({
             <Badge variant="outline">Shadowing — read-only</Badge>
           )}
         </div>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           {appointment.department.name} —{" "}
           {formatDateTime(appointment.scheduledAt)}
         </p>

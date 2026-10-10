@@ -77,12 +77,18 @@
   --muted-foreground: #6b6559;
   --accent: #e3eeec;
   --accent-foreground: #0f5c54;
-  --brand-accent: #b8822e;
+  /* #946818, not the #b8822e from the original pitch -- that one only
+     reached 3.16:1 against this page's background, failing WCAG AA for
+     normal text (4.5:1). Darkened until it cleared 4.5:1 while staying
+     visibly gold rather than drifting to brown; confirmed via
+     scripts/check-contrast.ts (deleted after use, same as every other
+     scratch script in this project). */
+  --brand-accent: #946818;
   --brand-accent-foreground: #ffffff;
   --brand-accent-soft: #f5eada;
   --success: #2f7d5c;
   --success-foreground: #ffffff;
-  --warning: #b8822e;
+  --warning: #946818;
   --warning-foreground: #ffffff;
   --destructive: #b3432e;
   --border: #e4dfd6;

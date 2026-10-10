@@ -14,7 +14,7 @@ export default function CompetenciesPage(
   props: PageProps<"/competencies">,
 ) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
       <CompetenciesContent searchParams={props.searchParams} />
     </Suspense>
   );
@@ -37,7 +37,7 @@ async function CompetenciesContent({
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Your progress against the core competency catalog.
           </p>
         </div>
@@ -52,7 +52,7 @@ async function CompetenciesContent({
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Every student&rsquo;s competency progress, system-wide.
           </p>
         </div>
@@ -77,7 +77,7 @@ async function CompetenciesContent({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Competencies</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Track and assess your students&rsquo; competency progress.
         </p>
       </div>
@@ -89,7 +89,7 @@ async function CompetenciesContent({
           studentId={studentId}
         />
       ) : (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           You don&rsquo;t have access to this student&rsquo;s competency record.
         </p>
       ))}
