@@ -1053,3 +1053,12 @@ doesn't have to read the whole log to find them.
   reran the full suite twice: 157/157, clean both times. The lesson
   worth keeping: in a shared database, "intermittently failing" is a
   hypothesis to check, not a conclusion to write down.
+- Phase 5 Stage 5: swept the remaining `text-zinc-500`/`bg-zinc-50`
+  usages across the clinical records dialogs, shadowing assignment,
+  activity assignment and workflow, and the admin password-reset
+  dialog. `RequestAppointmentDialog`, `RecordAssessmentDialog`, and
+  `CreatePlacementDialog` needed no changes -- already clean. Checked
+  for any remaining raw `<input>`/`<button>` elements across every
+  dialog in scope and found none; Phase 1 already built these against
+  the shared `Input`/`Select`/`Button` primitives, so this stage was a
+  token sweep only, not a component-swap.
