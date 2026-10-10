@@ -994,3 +994,19 @@ doesn't have to read the whole log to find them.
   hand-picked brand hues, since there's no real chart yet to design
   colors against and a validated placeholder beats an unvalidated
   brand-matched one for dead code that might activate later.
+- Phase 5 Stage 2: landing, login, and register moved off hardcoded
+  zinc classes onto the Stage 1 tokens -- serif headings, the teal
+  primary button, a gold eyebrow label, a small brand mark on the
+  landing page. Login and register also moved from raw
+  `<input>`/`<label>`/`<button>` elements to the shared
+  `Input`/`Label`/`Button` components used everywhere else in the app,
+  so they inherit focus rings and future token changes automatically.
+  Found while reviewing the result: the landing page's secondary CTA
+  was nearly invisible as an outline button in light mode -- `--border`
+  and `--background` are close enough in lightness that a 1px border
+  doesn't read as a button edge directly against the page (it works
+  fine against a card, which is what the Stage 1 pitch mockup actually
+  showed it against). Switched that one call site to the `secondary`
+  variant rather than darkening the global `--border` token, which is
+  correctly subtle for its real job of separating cards/inputs from
+  their background.
