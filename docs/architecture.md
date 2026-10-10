@@ -411,7 +411,7 @@ single stage after the threat model has been forgotten.
 
 ## 12. Development roadmap
 
-Resequenced from the original 24-stage list into 5 phases, around one idea:
+Resequenced from the original 24-stage list into phases, around one idea:
 **get to a real, reviewable, authenticated system fast**, then layer the
 education platform on top of a foundation that's already correct.
 
@@ -421,7 +421,8 @@ education platform on top of a foundation that's already correct.
 | **1 — Hospital core** | See the Stage 1–6 breakdown below. Authorization tests ship alongside each feature. **Checkpoint: a working, authenticated, RBAC-enforced hospital CRUD system — demoable on its own.** |
 | **2 — Education platform** | See the Stage 1–6 breakdown below. |
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
-| **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. |
+| **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
+| **5 — Visual identity & production readiness** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below. Sequenced design-first, hardening-second (confirmed with the user) — hardening for real clinical use also carries real legal/compliance obligations (data protection law, consent, breach notification) that are outside what engineering work alone can satisfy; see the note at the start of the Phase 5 breakdown. |
 
 ### Phase 1 breakdown
 
@@ -556,6 +557,32 @@ before starting:
 | 4 | UI/UX polish: a real mobile navigation (the `Sidebar` is currently `hidden` below the `md` breakpoint with no replacement at all — a genuine gap, not polish-level nitpicking), an accessibility pass (keyboard navigation, ARIA labels, focus states, contrast), and consistent empty/loading states and error/404 pages across pages that have drifted stage-to-stage. |
 | 5 | Deployment hardening: wire `prisma migrate deploy` into the production build step, apply the Stage 2 security headers, confirm production environment variables against `.env.example`, and smoke-test the live deployment end-to-end once Stages 1-4 have shipped. |
 | 6 | Finish docs: a final top-to-bottom accuracy pass on README/architecture.md/ERD (not a rewrite — both have been kept current stage-by-stage throughout), plus an explicit "known limitations" section listing every deliberate scope cut made along the way (admin-only password reset, no file uploads, in-app-only notifications, etc.) so a reviewer sees them as decisions, not gaps. |
+
+### Phase 5 breakdown
+
+**Scope note, confirmed with the user before starting:** "actually usable for
+a real clinic" and "a real system, not a demo" means real patients' health
+data at some point. That's regulated — POPIA in South Africa, HIPAA-equivalent
+rules in most other jurisdictions — covering lawful basis for processing,
+consent, data retention/deletion, and breach notification, plus confirming
+whatever hosts this (Neon, Vercel) actually supports health data on the plan
+in use. None of that is satisfiable by engineering work alone; it needs an
+actual lawyer or compliance consultant for the relevant jurisdiction before
+any real patient data touches this system. What *is* in scope for this phase:
+closing the engineering gap between "demo" and "production-grade" — real file
+uploads, real email delivery, rate limiting, a harder security pass — and a
+genuine visual identity. Sequenced design-first (confirmed with the user):
+lower-risk and self-contained, versus hardening work that touches
+infrastructure and external services.
+
+| Stage | Contents |
+|---|---|
+| 1 | Design tokens foundation: a new color palette (clinical teal + academic gold accent, warm neutrals throughout, replacing shadcn's stock grayscale theme) as CSS custom properties in `app/globals.css`, light and dark; a new three-font system (IBM Plex Serif for headings, Plex Sans for UI/body, Plex Mono for data) self-hosted via `next/font/google`, replacing Geist; a softer, larger radius scale. Direction pitched and approved as a standalone preview (palette swatches, type specimens, a mocked dashboard) before touching any real component, to avoid an expensive redesign going the wrong way. |
+| 2 | Public-facing pages: landing, login, register — apply the new identity where a visitor forms their first impression. |
+| 3 | Dashboard shell: `Sidebar`, `MobileNav`, `Topbar` — teal-tinted nav, serif wordmark, replacing the hardcoded zinc classes those components currently use in place of the semantic tokens Stage 1 defines. |
+| 4 | Dashboards & data surfaces: stat tiles, the five role dashboards, tables, status badges — the highest-visibility, most data-dense screens in the app. |
+| 5 | Forms & dialogs: every "Add X" dialog across appointments/activities/competencies/placements/staff — a consistent polish pass once the shell and data surfaces already read correctly. |
+| 6 | Final pass: 404/error pages, notifications, search, and any component Stages 2–5 didn't directly touch; full light/dark and mobile QA; an accessibility re-check against the new palette's contrast ratios specifically (a new palette can silently reintroduce a contrast failure the Phase 4 Stage 4 pass already fixed once under the old one). |
 
 ## Summary: deviations from the original brief
 
@@ -922,3 +949,48 @@ doesn't have to read the whole log to find them.
   deliberate choice for a portfolio project with only fictional data;
   nothing in this app would benefit from separate environments the way a
   real multi-developer team's app would.
+
+## Phase 5 build log
+
+- Phase 5 Stage 1: direction pitched and approved first as a standalone
+  preview -- a self-contained HTML mockup with palette swatches, type
+  specimens, and a rough dashboard layout -- before any real component
+  was touched, specifically to avoid finding out the direction was
+  wrong only after a large implementation effort. New tokens (hex, not
+  oklch -- exact-match precision against the approved palette mattered
+  more here than consistency with shadcn's default convention) cover
+  every existing semantic slot (background/foreground/card/primary/
+  secondary/muted/border/ring/sidebar-*) plus one new slot,
+  `brand-accent`, for the gold accent -- which deliberately does *not*
+  reuse shadcn's own `accent` slot, since that one is already load-bearing
+  as the subtle hover/focus background on every dropdown and select
+  item in the app; repurposing it for a bold brand color would have
+  made every menu hover looks wrong.
+  Fonts moved from Geist Sans/Mono to a three-family IBM Plex system
+  (Serif for headings via the `font-heading` utility already wired to
+  `DialogTitle`, Sans for body/UI, Mono for data) via `next/font/google`
+  -- self-hosted at build time, so this needed zero changes to the
+  Stage 2 CSP's `font-src 'self'` directive.
+  Found while testing dark mode for this stage, not introduced by it: a
+  pre-existing, previously-undetected gap where `next-themes` was a
+  real dependency, imported and called (`useTheme()`) inside
+  `components/ui/sonner.tsx`, but no `<ThemeProvider>` ever wrapped the
+  app. Every `dark:`-prefixed Tailwind class written across every phase
+  of this entire project -- and there are a great many, going back to
+  Phase 1 -- has been dead code; the `.dark` class that activates them
+  was never applied by anything, regardless of OS preference. Fixed
+  with a new `ThemeProvider` component wrapping the app in
+  `app/layout.tsx` (`attribute="class"`, `defaultTheme="system"`,
+  `enableSystem`), confirmed live via screenshots at both
+  `prefers-color-scheme` settings -- dark mode now genuinely activates
+  for the first time in this project's history. A manual toggle control
+  is deferred to Stage 3, when `Topbar` is already being rebuilt.
+  Also set the long-unused `chart-1`..`chart-5` tokens: Recharts is
+  named in the Section 7 tech stack table but was never actually
+  installed, and nothing in this codebase renders a chart (competency
+  "bars" are plain styled `div`s) -- found while deciding what to set
+  these to. Set to the dataviz skill's pre-validated categorical
+  reference order (run through its CVD-safety validator) rather than
+  hand-picked brand hues, since there's no real chart yet to design
+  colors against and a validated placeholder beats an unvalidated
+  brand-matched one for dead code that might activate later.

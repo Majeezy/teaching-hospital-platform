@@ -12,7 +12,8 @@ for more on that boundary.
 **Live demo:** [teaching-hospital-platform.vercel.app](https://teaching-hospital-platform.vercel.app)
 — sign in with the demo admin account below, or register as a patient.
 
-**Status:** ✅ All five phases complete (Phase 4, Stage 6 — Finish docs).
+**Status:** 🚧 Phases 0–4 complete. Phase 5 (visual identity & production
+readiness) in progress, Stage 1.
 
 ## Database
 
@@ -125,6 +126,13 @@ the integration tests.
 - [x] Phase 4, Stage 4 — UI/UX polish
 - [x] Phase 4, Stage 5 — Deployment hardening
 - [x] Phase 4, Stage 6 — Finish docs
+- [x] Phase 5, Stage 1 — Design tokens foundation (palette, type, dark mode)
+- [ ] Phase 5, Stage 2 — Public-facing pages
+- [ ] Phase 5, Stage 3 — Dashboard shell
+- [ ] Phase 5, Stage 4 — Dashboards & data surfaces
+- [ ] Phase 5, Stage 5 — Forms & dialogs
+- [ ] Phase 5, Stage 6 — Final pass & accessibility re-check
 
-All five phases are complete. See `docs/architecture.md` for what each
-phase actually contains.
+Phases 0–4 (the original scope) are complete. Phase 5 (visual identity and
+movement toward production readiness) is in progress. See
+`docs/architecture.md` for what each phase actually contains.
