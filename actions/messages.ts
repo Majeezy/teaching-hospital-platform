@@ -49,6 +49,9 @@ export async function listEligibleRecipientsForUser(
   user: SessionUser,
 ): Promise<EligibleRecipient[]> {
   if (hasAnyRole(user, ["HOSPITAL_ADMIN", "SYSTEM_ADMIN"])) {
+    // Exhaustive by itself -- admin can message literally anyone, so no
+    // other branch below could add anything this one doesn't already
+    // cover, even for an account that also holds another role.
     const users = await prisma.user.findMany({
       where: { id: { not: user.id }, isActive: true },
       include: { roles: { include: { role: true } } },
@@ -61,6 +64,12 @@ export async function listEligibleRecipientsForUser(
     }));
   }
 
+  // Every other branch is additive, not exclusive -- an account holding
+  // more than one of these roles (e.g. a doctor who is also a patient
+  // elsewhere in the hospital) gets the union of what each role is
+  // entitled to, not just whichever branch happened to run first.
+  const recipients: EligibleRecipient[] = [];
+
   if (hasRole(user, "PATIENT")) {
     const patientProfile = await prisma.patientProfile.findUniqueOrThrow({
       where: { userId: user.id },
@@ -72,8 +81,8 @@ export async function listEligibleRecipientsForUser(
         doctor: { select: { userId: true, user: { select: { name: true } } } },
       },
     });
-    return dedupe(
-      appointments.map((a) => ({
+    recipients.push(
+      ...appointments.map((a) => ({
         userId: a.doctor.userId,
         name: a.doctor.user.name,
         roles: ["DOCTOR"],
@@ -92,8 +101,8 @@ export async function listEligibleRecipientsForUser(
         supervisor: { select: { userId: true, user: { select: { name: true } } } },
       },
     });
-    return dedupe(
-      placements.map((p) => ({
+    recipients.push(
+      ...placements.map((p) => ({
         userId: p.supervisor.userId,
         name: p.supervisor.user.name,
         roles: ["DOCTOR"],
@@ -117,11 +126,13 @@ export async function listEligibleRecipientsForUser(
         : Promise.resolve(null),
     ]);
 
-    const recipients: EligibleRecipient[] = staff.map((u) => ({
-      userId: u.id,
-      name: u.name,
-      roles: u.roles.map((r) => r.role.name),
-    }));
+    recipients.push(
+      ...staff.map((u) => ({
+        userId: u.id,
+        name: u.name,
+        roles: u.roles.map((r) => r.role.name),
+      })),
+    );
 
     if (doctorProfile) {
       const [ownPatients, ownStudents] = await Promise.all([
@@ -153,11 +164,9 @@ export async function listEligibleRecipientsForUser(
         })),
       );
     }
-
-    return dedupe(recipients);
   }
 
-  return [];
+  return dedupe(recipients);
 }
 
 export async function sendMessageForUser(

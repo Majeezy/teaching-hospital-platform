@@ -3,6 +3,15 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 
+// A fixed, precomputed bcrypt hash with no corresponding real password --
+// compared against when the email doesn't match a user at all, so a
+// nonexistent-email response takes the same ~100ms as a wrong-password
+// one. Without this, skipping bcrypt entirely on "no such user" makes the
+// two cases distinguishable by response time alone, even though both
+// return the same generic `null`.
+const TIMING_SAFE_DUMMY_HASH =
+  "$2b$12$1WpNFgmyxS.OGV/9jT.seO7ED9KpMLljOHiB.9NQlYS.gZ6PjFXHi";
+
 export const authOptions: AuthOptions = {
   session: {
     // next-auth v4's Credentials provider always issues a JWT-backed
@@ -31,13 +40,12 @@ export const authOptions: AuthOptions = {
           include: { roles: { include: { role: true } } },
         });
 
-        if (!user || !user.isActive) return null;
-
         const isValid = await verifyPassword(
           credentials.password,
-          user.passwordHash,
+          user?.passwordHash ?? TIMING_SAFE_DUMMY_HASH,
         );
-        if (!isValid) return null;
+
+        if (!user || !user.isActive || !isValid) return null;
 
         return {
           id: user.id,

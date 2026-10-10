@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 
@@ -42,21 +43,39 @@ export async function registerPatient(
 
   const passwordHash = await hashPassword(password);
 
-  await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      roles: {
-        create: { roleId: patientRole.id },
-      },
-      patientProfile: {
-        create: {
-          dateOfBirth: new Date(dateOfBirth),
+  try {
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        roles: {
+          create: { roleId: patientRole.id },
+        },
+        patientProfile: {
+          create: {
+            dateOfBirth: new Date(dateOfBirth),
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    // The existence check above is TOCTOU-racy under concurrent
+    // registrations with the same email -- email is DB-unique, so the
+    // loser of the race lands here instead of corrupting any data.
+    // Surface the same friendly message rather than a raw Prisma
+    // constraint error.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        success: false,
+        error: "An account with this email already exists.",
+      };
+    }
+    throw error;
+  }
 
   return { success: true };
 }

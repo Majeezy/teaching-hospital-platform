@@ -2,7 +2,13 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireUser, requireRole, type SessionUser } from "@/lib/permissions";
+import {
+  requireUser,
+  requireRole,
+  requireFound,
+  AuthorizationError,
+  type SessionUser,
+} from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { getAppointmentForUser, isAssignedDoctor } from "@/actions/appointments";
 
@@ -54,12 +60,14 @@ async function assertDoctorOwnsAppointment(
   appointmentId: string,
 ) {
   requireRole(user, "DOCTOR");
-  const appointment = await prisma.appointment.findUniqueOrThrow({
-    where: { id: appointmentId },
-  });
+  const appointment = requireFound(
+    await prisma.appointment.findUnique({ where: { id: appointmentId } }),
+  );
   const owns = await isAssignedDoctor(user, appointment.doctorId);
   if (!owns) {
-    throw new Error("You can only add clinical records to your own appointments.");
+    throw new AuthorizationError(
+      "You can only add clinical records to your own appointments.",
+    );
   }
   return appointment;
 }
@@ -242,18 +250,22 @@ export async function addTestResultForUser(
   const data = testResultSchema.parse(input);
   requireRole(user, "DOCTOR");
 
-  const testOrder = await prisma.testOrder.findUniqueOrThrow({
-    where: { id: data.testOrderId },
-  });
+  const testOrder = requireFound(
+    await prisma.testOrder.findUnique({ where: { id: data.testOrderId } }),
+  );
   if (!testOrder.appointmentId) {
     throw new Error("This test order isn't linked to an appointment.");
   }
-  const appointment = await prisma.appointment.findUniqueOrThrow({
-    where: { id: testOrder.appointmentId },
-  });
+  const appointment = requireFound(
+    await prisma.appointment.findUnique({
+      where: { id: testOrder.appointmentId },
+    }),
+  );
   const owns = await isAssignedDoctor(user, appointment.doctorId);
   if (!owns) {
-    throw new Error("You can only record results for your own patients' tests.");
+    throw new AuthorizationError(
+      "You can only record results for your own patients' tests.",
+    );
   }
 
   const [result] = await prisma.$transaction([
