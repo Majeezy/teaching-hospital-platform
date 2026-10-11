@@ -281,6 +281,8 @@ model Document {
   patientId    String
   uploadedById String
   fileUrl      String
+  fileName     String
+  sizeBytes    Int
   type         String
   uploadedAt   DateTime @default(now())
 

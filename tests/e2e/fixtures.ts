@@ -235,6 +235,14 @@ export async function cleanupE2EUsers(userIds: string[]) {
       ],
     },
   });
+  await prisma.document.deleteMany({
+    where: {
+      OR: [
+        { patient: { userId: { in: ids } } },
+        { uploadedById: { in: ids } },
+      ],
+    },
+  });
   await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
   await prisma.message.deleteMany({
     where: { OR: [{ senderId: { in: ids } }, { recipientId: { in: ids } }] },

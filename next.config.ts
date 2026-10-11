@@ -1,18 +1,22 @@
 import type { NextConfig } from "next";
 
-// This app has no third-party scripts, iframes, or cross-origin assets
-// anywhere -- every directive below is "self" or stricter. unsafe-inline
+// This app has no third-party scripts or iframes anywhere -- every
+// directive below is "self" or stricter except connect-src, which also
+// allows vercel.com: client-side document uploads (@vercel/blob/client's
+// upload(), Phase 6 Stage 2) PUT the file straight from the browser to
+// Vercel Blob's control-plane API, bypassing our own server entirely --
+// that's the whole point (no Server Action body-size limit). unsafe-inline
 // stays on script-src/style-src because Next.js's own hydration payload
 // and Tailwind's injected styles both rely on inline tags; a nonce-based
-// CSP would need per-request middleware wiring that isn't worth it for
-// an app with no external script sources to begin with.
+// CSP would need per-request middleware wiring that isn't worth it given
+// there's still no external *script* source.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://vercel.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

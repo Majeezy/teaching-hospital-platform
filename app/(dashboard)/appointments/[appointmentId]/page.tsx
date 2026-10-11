@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getSessionUser } from "@/lib/permissions";
 import { getAppointmentRecords } from "@/actions/clinical-records";
+import { listDocumentsForAppointment } from "@/actions/documents";
 import {
   listShadowableStudents,
   listShadowingForAppointment,
@@ -12,6 +14,7 @@ import { STATUS_VARIANT } from "@/lib/appointment-status";
 import { formatDateTime } from "@/lib/format-date";
 import { ClinicalRecordsPanel } from "@/components/appointments/ClinicalRecordsPanel";
 import { ShadowingPanel } from "@/components/appointments/ShadowingPanel";
+import { DocumentsSection } from "@/components/documents/DocumentsSection";
 
 export default function AppointmentDetailPage(
   props: PageProps<"/appointments/[appointmentId]">,
@@ -44,12 +47,15 @@ async function AppointmentDetailContent({
   // had none) purely so an unauthorized caller resolves safely instead
   // of rejecting mid-Promise.all -- the notFound() below is still what
   // actually decides access, driven by `data` alone.
-  const [data, shadowingAssignments, shadowableStudents] = await Promise.all([
-    getAppointmentRecords(appointmentId).catch(() => null),
-    listShadowingForAppointment(appointmentId).catch(() => []),
-    listShadowableStudents(appointmentId).catch(() => null),
-  ]);
-  if (!data) notFound();
+  const [user, data, shadowingAssignments, shadowableStudents, documentsData] =
+    await Promise.all([
+      getSessionUser(),
+      getAppointmentRecords(appointmentId).catch(() => null),
+      listShadowingForAppointment(appointmentId).catch(() => []),
+      listShadowableStudents(appointmentId).catch(() => null),
+      listDocumentsForAppointment(appointmentId).catch(() => null),
+    ]);
+  if (!data || !user) notFound();
 
   const {
     appointment,
@@ -115,6 +121,21 @@ async function AppointmentDetailContent({
         prescriptions={prescriptions}
         testOrders={testOrders}
       />
+
+      {/* Documents aren't scoped to one appointment in the schema -- this
+          shows every document on file for the patient, same reasoning as
+          why prescriptions/tests are hidden rather than shown empty for a
+          shadowing student: documentsData is null for them (excluded
+          entirely), not an empty list. */}
+      {documentsData && (
+        <DocumentsSection
+          patientId={appointment.patientId}
+          context={{ kind: "appointment", appointmentId: appointment.id }}
+          canUpload={documentsData.canUpload}
+          currentUserId={user.id}
+          documents={documentsData.documents}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { getSessionUser } from "@/lib/permissions";
 import { getMyProfile } from "@/actions/patients";
+import { listMyDocuments } from "@/actions/documents";
 import { ProfileForm } from "@/components/patient/ProfileForm";
+import { DocumentsSection } from "@/components/documents/DocumentsSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/format-date";
 
@@ -14,7 +16,11 @@ export default function ProfilePage() {
 }
 
 async function ProfileContent() {
-  const [user, profile] = await Promise.all([getSessionUser(), getMyProfile()]);
+  const [user, profile, documents] = await Promise.all([
+    getSessionUser(),
+    getMyProfile(),
+    listMyDocuments(),
+  ]);
   if (!user) return null; // layout already redirects; satisfies types here
 
   const age = calculateAge(profile.dateOfBirth);
@@ -51,6 +57,14 @@ async function ProfileContent() {
       </Card>
 
       <ProfileForm profile={profile} />
+
+      <DocumentsSection
+        patientId={profile.id}
+        context={{ kind: "self" }}
+        canUpload
+        currentUserId={user.id}
+        documents={documents}
+      />
     </div>
   );
 }

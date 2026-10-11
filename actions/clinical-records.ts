@@ -55,7 +55,7 @@ const authorInclude = { author: { select: { name: true } } } as const;
  * per the permissions matrix, unlike every other entity in this app where
  * admin has full access).
  */
-async function assertDoctorOwnsAppointment(
+export async function assertDoctorOwnsAppointment(
   user: SessionUser,
   appointmentId: string,
 ) {
