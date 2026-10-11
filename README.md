@@ -13,9 +13,9 @@ for more on that boundary.
 — sign in with the demo admin account below, or register as a patient.
 
 **Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
-🚧 Production-readiness hardening (real file uploads, real email
-delivery, rate limiting, a harder security pass) is planned next, not
-yet started.
+🚧 Phase 6 (production-readiness hardening) under way: real file
+uploads are done; a separate dev/prod database, real email delivery,
+rate limiting, and a harder security pass are still pending.
 
 ## Database
 
@@ -41,9 +41,10 @@ unrestricted access to a patient's full record.
 
 Full design rationale, the entity-relationship diagram, the permissions
 matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
-Deliberate scope cuts (no file uploads, no self-service password reset,
-no rate limiting, etc.) are listed explicitly in that document's
-[Known limitations](docs/architecture.md#known-limitations) section.
+Deliberate scope cuts (no self-service password reset, no rate
+limiting, a shared dev/prod database, etc.) are listed explicitly in
+that document's [Known limitations](docs/architecture.md#known-limitations)
+section.
 
 ## Tech stack
 
@@ -134,10 +135,20 @@ the integration tests.
 - [x] Phase 5, Stage 4 — Dashboards & data surfaces
 - [x] Phase 5, Stage 5 — Forms & dialogs
 - [x] Phase 5, Stage 6 — Final pass & accessibility re-check
+- [ ] Phase 6, Stage 1 — Separate dev/prod database (deferred — blocked on a Vercel Marketplace integration issue)
+- [x] Phase 6, Stage 2 — Real file uploads (patient documents via Vercel Blob)
+- [ ] Phase 6, Stage 3 — Real email delivery
+- [ ] Phase 6, Stage 4 — Rate limiting
+- [ ] Phase 6, Stage 5 — Harder security pass
+- [ ] Phase 6, Stage 6 — Data subject tooling & final docs pass
 
 Phases 0–5 are complete: the original scope, plus a real visual
-identity and a round of production-readiness hardening. See
-`docs/architecture.md` for what each phase actually contains, including
-the two genuine bugs (dark mode never actually activating; a
-sequential-query latency bug on the activity detail page) found along
-the way.
+identity and a round of production-readiness hardening. Phase 6 (the
+rest of that hardening) is under way. See `docs/architecture.md` for
+what each phase actually contains, including the two genuine bugs
+(dark mode never actually activating; a sequential-query latency bug on
+the activity detail page) found during Phase 5, and two infrastructure
+findings from Phase 6 Stage 2 (client-upload token generation needs a
+static Blob read-write token even though every other Blob operation
+accepts OIDC; the CSP's `connect-src` needed an explicit exception for
+the browser-to-Blob upload).
