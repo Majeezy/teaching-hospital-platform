@@ -423,7 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
-| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stage 1 (separate dev/prod database) is deferred — stuck on a broken Vercel Marketplace terms-acceptance link for the Neon integration, not abandoned. Stage 2 (real file uploads) is complete. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database) and 2 (real file uploads) are complete. |
 
 ### Phase 1 breakdown
 
@@ -596,7 +596,7 @@ scope note above.)
 
 | Stage | Contents |
 |---|---|
-| 1 | Separate dev/prod database — currently **deferred**, not done. Attempted via the Vercel Marketplace Neon integration (`vercel integration add neon`); blocked on a terms-acceptance deep link that 404s for this account/CLI combination (confirmed twice, and confirmed as a broader pattern — a second, unrelated Blob-store dashboard deep link 404'd the same way during Stage 2). The app continues to share one Neon database across local dev and production in the meantime — an accepted risk, not an oversight. |
+| 1 | Separate dev/prod database. The Vercel Marketplace path (`vercel integration add neon`) stayed blocked on a terms-acceptance deep link that 404s for this account/CLI combination, confirmed three times across two different stages. Worked around by using Neon's *own* "Connect to Vercel" flow instead (console.neon.tech), which pushes env vars directly via API without going through the broken Marketplace registration step. Connected to the Neon project already backing production, with "create a branch for the development environment" checked — Neon created a copy-on-write branch (`ep-round-credit-*`) off the existing data rather than a separate empty project, so Development got the real schema and starting data without touching Production's. Vercel's Development-scoped `DATABASE_URL`/`DIRECT_URL` were repointed at the new branch's pooled/unpooled connection strings; Production's were never touched (confirmed via `vercel env ls` timestamps before and after). |
 | 2 | Real file uploads: `Document` (migrated since Phase 0, unused until now) backed by Vercel Blob, private store, client-side upload (`@vercel/blob/client`) to stay under the 4.5MB Server Action body limit. Documents aren't appointment-scoped in the schema, so they're shown two ways: inside `ClinicalRecordsPanel` on an appointment (listing everything on file for that patient, reusing the appointment's own `canEdit`/`isShadowingStudent` access rule rather than a second one) and as a "Documents" section on the patient's own profile page. Excluded from shadowing access entirely (same as prescriptions/tests); admin keeps read-only oversight (same as every other clinical record type); only the uploader can delete. |
 | 3 | Real email delivery (a provider for password-reset notices and the in-app notifications that currently have no email/push fallback) — not started. |
 | 4 | Rate limiting on login/registration — not started. |
@@ -927,11 +927,6 @@ doesn't have to read the whole log to find them.
   admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
   admin-provisioned rather than self-registered; notifications (Phase 3
   Stage 1) are in-app only, no email/push.
-- **Local dev and production share one Neon database.** A separate
-  database was the first thing attempted in Phase 6, blocked on a
-  broken Vercel Marketplace terms-acceptance link for the Neon
-  integration (Phase 6 Stage 1) -- deferred per the user's explicit
-  choice, not fixed.
 - **No rate limiting anywhere** (login, registration) -- would need a new
   external dependency (e.g. Upstash) for a single-instance portfolio
   deployment with no existing abuse signal to justify it (Phase 4 Stage 2).
@@ -1117,14 +1112,41 @@ specifically looking for.
 
 ## Phase 6 build log
 
-- Phase 6 Stage 1 (separate dev/prod database): attempted, deferred.
-  `vercel integration add neon` returned `integration_terms_acceptance_
-  required` pointing at a dashboard URL that 404s; retried once (same
-  URL, ruling out a stale link), then asked the user to find it from
-  the main dashboard instead -- still stuck. User's explicit call: skip
-  it for now and move to file uploads rather than keep digging. The app
-  still shares one Neon database across local dev and production as a
-  result -- an accepted risk, not a fix.
+- Phase 6 Stage 1 (separate dev/prod database): first attempt deferred,
+  then revisited and completed. `vercel integration add neon` kept
+  returning `integration_terms_acceptance_required` pointing at a
+  dashboard URL that 404s -- confirmed three times total across two
+  separate sessions (twice via the CLI's own link, once more via the
+  user navigating the dashboard directly to the same broken page), so
+  this isn't a stale-link fluke, it's a genuinely broken deep link for
+  this account/CLI combination. The actual fix: Neon's own "Connect to
+  Vercel" flow at console.neon.tech, reached by having the user search
+  for "Integrations"/"Marketplace" from Vercel's plain dashboard rather
+  than following any generated link -- it authenticates and pushes env
+  vars directly via API, sidestepping the Marketplace registration step
+  entirely. One wrinkle along the way: the Neon account OAuth-linked by
+  default had zero projects (a different Neon login than the one that
+  actually owns the production database) -- resolved by switching the
+  "Neon account" dropdown on Neon's own connect page to the other
+  linked account, where the existing project showed up. Selected that
+  existing project (not "create new") with "create a branch for the
+  development environment" checked, so Neon branched a copy-on-write
+  development database off the existing one instead of starting from
+  empty -- same schema, same starting data (confirmed: the new branch's
+  `User` table already had the one seeded admin), diverges independently
+  from here. The flow only injected one new var (`DATABASE_URL_UNPOOLED`)
+  rather than overwriting the existing `DATABASE_URL`/`DIRECT_URL` --
+  apparently Vercel's env injection skips names that already exist
+  rather than clobbering them, which is what kept Production safe
+  throughout this whole process without any extra care needed. Manually
+  repointed Development's `DATABASE_URL` (pooled, `-pooler` suffix
+  confirmed by hand -- the branch's pooled hostname isn't given directly,
+  only the unpooled one is) and `DIRECT_URL` (unpooled) at the new
+  branch, removed the now-unused `DATABASE_URL_UNPOOLED`, and left
+  Production's vars untouched. Verified: `prisma migrate status` reports
+  up to date on the new branch with zero migrations needed, and the full
+  suite -- 157 unit/integration tests, all 8 E2E specs -- passes running
+  against it.
 
 - Phase 6 Stage 2 (real file uploads): `Document` -- migrated since
   Phase 0, never built against -- is now backed by Vercel Blob. Added

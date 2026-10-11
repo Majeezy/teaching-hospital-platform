@@ -13,8 +13,8 @@ for more on that boundary.
 — sign in with the demo admin account below, or register as a patient.
 
 **Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
-🚧 Phase 6 (production-readiness hardening) under way: real file
-uploads are done; a separate dev/prod database, real email delivery,
+🚧 Phase 6 (production-readiness hardening) under way: a separate
+dev/prod database and real file uploads are done; real email delivery,
 rate limiting, and a harder security pass are still pending.
 
 ## Database
@@ -42,9 +42,8 @@ unrestricted access to a patient's full record.
 Full design rationale, the entity-relationship diagram, the permissions
 matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
 Deliberate scope cuts (no self-service password reset, no rate
-limiting, a shared dev/prod database, etc.) are listed explicitly in
-that document's [Known limitations](docs/architecture.md#known-limitations)
-section.
+limiting, etc.) are listed explicitly in that document's
+[Known limitations](docs/architecture.md#known-limitations) section.
 
 ## Tech stack
 
@@ -135,7 +134,7 @@ the integration tests.
 - [x] Phase 5, Stage 4 — Dashboards & data surfaces
 - [x] Phase 5, Stage 5 — Forms & dialogs
 - [x] Phase 5, Stage 6 — Final pass & accessibility re-check
-- [ ] Phase 6, Stage 1 — Separate dev/prod database (deferred — blocked on a Vercel Marketplace integration issue)
+- [x] Phase 6, Stage 1 — Separate dev/prod database (Neon branch, via Neon's own Vercel-connect flow)
 - [x] Phase 6, Stage 2 — Real file uploads (patient documents via Vercel Blob)
 - [ ] Phase 6, Stage 3 — Real email delivery
 - [ ] Phase 6, Stage 4 — Rate limiting
