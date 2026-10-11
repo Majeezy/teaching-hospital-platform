@@ -423,6 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stage 1 (separate dev/prod database) is deferred — stuck on a broken Vercel Marketplace terms-acceptance link for the Neon integration, not abandoned. Stage 2 (real file uploads) is complete. |
 
 ### Phase 1 breakdown
 
@@ -583,6 +584,24 @@ infrastructure and external services.
 | 4 | Dashboards & data surfaces: stat tiles, the five role dashboards, tables, status badges — the highest-visibility, most data-dense screens in the app. |
 | 5 | Forms & dialogs: every "Add X" dialog across appointments/activities/competencies/placements/staff — a consistent polish pass once the shell and data surfaces already read correctly. |
 | 6 | Final pass: 404/error pages, notifications, search, and any component Stages 2–5 didn't directly touch; full light/dark and mobile QA; an accessibility re-check against the new palette's contrast ratios specifically (a new palette can silently reintroduce a contrast failure the Phase 4 Stage 4 pass already fixed once under the old one). |
+
+### Phase 6 breakdown
+
+The production-readiness half of Phase 5's scope note: closing the
+remaining engineering gaps between "demo" and "production-grade" that
+design work alone doesn't touch. (The non-engineering half — actual
+legal/compliance sign-off before any real patient data touches this
+system — is still out of scope entirely; see the Phase 5 breakdown's
+scope note above.)
+
+| Stage | Contents |
+|---|---|
+| 1 | Separate dev/prod database — currently **deferred**, not done. Attempted via the Vercel Marketplace Neon integration (`vercel integration add neon`); blocked on a terms-acceptance deep link that 404s for this account/CLI combination (confirmed twice, and confirmed as a broader pattern — a second, unrelated Blob-store dashboard deep link 404'd the same way during Stage 2). The app continues to share one Neon database across local dev and production in the meantime — an accepted risk, not an oversight. |
+| 2 | Real file uploads: `Document` (migrated since Phase 0, unused until now) backed by Vercel Blob, private store, client-side upload (`@vercel/blob/client`) to stay under the 4.5MB Server Action body limit. Documents aren't appointment-scoped in the schema, so they're shown two ways: inside `ClinicalRecordsPanel` on an appointment (listing everything on file for that patient, reusing the appointment's own `canEdit`/`isShadowingStudent` access rule rather than a second one) and as a "Documents" section on the patient's own profile page. Excluded from shadowing access entirely (same as prescriptions/tests); admin keeps read-only oversight (same as every other clinical record type); only the uploader can delete. |
+| 3 | Real email delivery (a provider for password-reset notices and the in-app notifications that currently have no email/push fallback) — not started. |
+| 4 | Rate limiting on login/registration — not started. |
+| 5 | A harder security pass: `reactivateUser`, department FK-conflict UX, and anything else the Phase 4 Stage 2 audit flagged as "accepted for now" rather than fixed — not started. |
+| 6 | Data subject tooling (export/delete a patient's own data) and a final Known Limitations pass once the above stages land — not started. |
 
 ## Summary: deviations from the original brief
 
@@ -908,11 +927,11 @@ doesn't have to read the whole log to find them.
   admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
   admin-provisioned rather than self-registered; notifications (Phase 3
   Stage 1) are in-app only, no email/push.
-- **`Document` (file uploads) is a fully migrated, completely unused
-  table.** It's in `schema.prisma` and the ERD from Phase 0, but no
-  action or UI was ever built against it (Phase 1 Stage 5) -- no storage
-  provider (S3, Vercel Blob, etc.) has been chosen, and nothing else in
-  the app needs one.
+- **Local dev and production share one Neon database.** A separate
+  database was the first thing attempted in Phase 6, blocked on a
+  broken Vercel Marketplace terms-acceptance link for the Neon
+  integration (Phase 6 Stage 1) -- deferred per the user's explicit
+  choice, not fixed.
 - **No rate limiting anywhere** (login, registration) -- would need a new
   external dependency (e.g. Upstash) for a single-instance portfolio
   deployment with no existing abuse signal to justify it (Phase 4 Stage 2).
@@ -1095,3 +1114,80 @@ activity-page latency bug) -- consistent with the pattern every prior
 phase's hardening/polish work has shown: the verification step a
 stage exists to do is also what catches the bugs that step wasn't
 specifically looking for.
+
+## Phase 6 build log
+
+- Phase 6 Stage 1 (separate dev/prod database): attempted, deferred.
+  `vercel integration add neon` returned `integration_terms_acceptance_
+  required` pointing at a dashboard URL that 404s; retried once (same
+  URL, ruling out a stale link), then asked the user to find it from
+  the main dashboard instead -- still stuck. User's explicit call: skip
+  it for now and move to file uploads rather than keep digging. The app
+  still shares one Neon database across local dev and production as a
+  result -- an accepted risk, not a fix.
+
+- Phase 6 Stage 2 (real file uploads): `Document` -- migrated since
+  Phase 0, never built against -- is now backed by Vercel Blob. Added
+  `fileName`/`sizeBytes` columns (the original schema had neither,
+  which would've meant showing users a bare type label with no way to
+  tell their files apart). Authorization reuses
+  `assertDoctorOwnsAppointment` (exported from `clinical-records.ts` for
+  this) for appointment-context uploads, and the appointment's own
+  `getAppointmentForUser` access rule for listing -- documents aren't
+  appointment-scoped in the schema, so "can you see this appointment"
+  becomes "can you see every document this patient has on file,"
+  deliberately, rather than inventing a second access rule for the same
+  data. A shadowing student gets nothing here, same exclusion as
+  prescriptions/tests. Only the uploader can delete -- not the owning
+  patient, not admin -- since a doctor's upload isn't the patient's to
+  remove and admin is read-only oversight everywhere else in clinical
+  data too.
+
+  Client-side upload (`@vercel/blob/client`'s `upload()` against a
+  `handleUpload` token route) rather than a Server Action, to stay
+  under the 4.5MB request body limit Vercel Functions impose --
+  `onBeforeGenerateToken` is where the real authorization check runs
+  (by the time the Server Action that records the resulting metadata
+  executes, the file's already written), scoping the token to a
+  pathname under the authorized patient's own folder and to PDF/JPG/PNG
+  under 10MB.
+
+  **Two genuine infrastructure findings, discovered by actually running
+  the upload flow, not by reading docs:**
+  1. Every other Blob operation (`put`/`get`/`del`/`list`) accepts OIDC
+     auth via `VERCEL_OIDC_TOKEN` + `BLOB_STORE_ID` -- but generating a
+     *client upload token* (`handleUpload` /
+     `generateClientTokenFromReadWriteToken`) does not, and fails with
+     "No read-write token found" regardless. Minting a signed client
+     token needs a symmetric signing secret; OIDC is a bearer credential
+     for direct API calls, not a substitute. Required provisioning an
+     actual `BLOB_READ_WRITE_TOKEN` from the dashboard (the store had
+     been connected via the newer OIDC-only flow, which never
+     provisions one) and adding it to Development, Production, and
+     local `.env.local`. (Preview couldn't be set non-interactively --
+     the CLI's own suggested non-interactive command for "all preview
+     branches" errors with `git_branch_required` on a single-branch
+     repo with no non-production branch to scope it to; left unset
+     since there's no Preview deployment to need it yet.) The server
+     *read* path (`get()`, in the download route) hit the same gap in
+     practice -- 403s under ambient OIDC resolution, fixed by passing
+     the same `BLOB_READ_WRITE_TOKEN` explicitly rather than relying on
+     the SDK's documented (but here, not working) OIDC-first priority.
+  2. The browser-to-Blob upload `PUT` goes to `vercel.com`'s control
+     plane, not the store's own storage domain -- blocked outright by
+     this app's `connect-src 'self'` CSP from Phase 4 Stage 2, which
+     had been accurate right up until this stage introduced the app's
+     first genuine cross-origin browser request. Fixed by adding
+     `https://vercel.com` to `connect-src` (see `next.config.ts`'s
+     comment for why that's still a narrow, deliberate exception, not a
+     loosening).
+
+  Verified end-to-end with a disposable Playwright script driving a
+  real browser through both upload paths before writing the permanent
+  spec: doctor uploads via the appointment, patient sees it on their
+  own profile with no delete control (not just a disabled one), patient
+  uploads their own, doctor sees that too via the appointment, both
+  download links resolve through the authenticated route, both
+  uploaders can delete their own file. That became
+  `tests/e2e/document-upload-journey.spec.ts`. Full suite afterward:
+  157 unit/integration tests, 8 E2E specs, all green.
