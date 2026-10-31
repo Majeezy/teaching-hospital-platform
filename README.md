@@ -14,8 +14,9 @@ for more on that boundary.
 
 **Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
 🚧 Phase 6 (production-readiness hardening) under way: a separate
-dev/prod database and real file uploads are done; real email delivery,
-rate limiting, and a harder security pass are still pending.
+dev/prod database, real file uploads, and real email delivery (admin-assisted
+password reset) are done; rate limiting and a harder security pass are
+still pending.
 
 ## Database
 
@@ -136,7 +137,7 @@ the integration tests.
 - [x] Phase 5, Stage 6 — Final pass & accessibility re-check
 - [x] Phase 6, Stage 1 — Separate dev/prod database (Neon branch, via Neon's own Vercel-connect flow)
 - [x] Phase 6, Stage 2 — Real file uploads (patient documents via Vercel Blob)
-- [ ] Phase 6, Stage 3 — Real email delivery
+- [x] Phase 6, Stage 3 — Real email delivery (Resend, admin-assisted password reset)
 - [ ] Phase 6, Stage 4 — Rate limiting
 - [ ] Phase 6, Stage 5 — Harder security pass
 - [ ] Phase 6, Stage 6 — Data subject tooling & final docs pass

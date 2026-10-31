@@ -423,7 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
-| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database) and 2 (real file uploads) are complete. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), and 3 (real email delivery) are complete. |
 
 ### Phase 1 breakdown
 
@@ -598,7 +598,7 @@ scope note above.)
 |---|---|
 | 1 | Separate dev/prod database. The Vercel Marketplace path (`vercel integration add neon`) stayed blocked on a terms-acceptance deep link that 404s for this account/CLI combination, confirmed three times across two different stages. Worked around by using Neon's *own* "Connect to Vercel" flow instead (console.neon.tech), which pushes env vars directly via API without going through the broken Marketplace registration step. Connected to the Neon project already backing production, with "create a branch for the development environment" checked — Neon created a copy-on-write branch (`ep-round-credit-*`) off the existing data rather than a separate empty project, so Development got the real schema and starting data without touching Production's. Vercel's Development-scoped `DATABASE_URL`/`DIRECT_URL` were repointed at the new branch's pooled/unpooled connection strings; Production's were never touched (confirmed via `vercel env ls` timestamps before and after). |
 | 2 | Real file uploads: `Document` (migrated since Phase 0, unused until now) backed by Vercel Blob, private store, client-side upload (`@vercel/blob/client`) to stay under the 4.5MB Server Action body limit. Documents aren't appointment-scoped in the schema, so they're shown two ways: inside `ClinicalRecordsPanel` on an appointment (listing everything on file for that patient, reusing the appointment's own `canEdit`/`isShadowingStudent` access rule rather than a second one) and as a "Documents" section on the patient's own profile page. Excluded from shadowing access entirely (same as prescriptions/tests); admin keeps read-only oversight (same as every other clinical record type); only the uploader can delete. |
-| 3 | Real email delivery (a provider for password-reset notices and the in-app notifications that currently have no email/push fallback) — not started. |
+| 3 | Real email delivery via Resend — wired up for admin-assisted password resets only; in-app notifications stay in-app for now (see the deviations summary below for why). |
 | 4 | Rate limiting on login/registration — not started. |
 | 5 | A harder security pass: `reactivateUser`, department FK-conflict UX, and anything else the Phase 4 Stage 2 audit flagged as "accepted for now" rather than fixed — not started. |
 | 6 | Data subject tooling (export/delete a patient's own data) and a final Known Limitations pass once the above stages land — not started. |
@@ -1213,3 +1213,61 @@ specifically looking for.
   uploaders can delete their own file. That became
   `tests/e2e/document-upload-journey.spec.ts`. Full suite afterward:
   157 unit/integration tests, 8 E2E specs, all green.
+
+- Phase 6 Stage 3 (real email delivery): wired up via
+  [Resend](https://resend.com) (`lib/email.ts`), matching the project's
+  existing pattern of picking the Vercel-native option where one exists
+  (Neon, Blob). Scoped to admin-assisted password reset only, not every
+  `notify()` call from Phase 3 Stage 1 -- in-app notifications
+  (appointment confirmed, shadowing assigned, feedback given, etc.)
+  stay in-app for now. Password reset is the one flow where a missing
+  notification channel is a real problem (a user who can't sign in has
+  no other way to receive it); extending email to the rest of the
+  notification list would be a second, independent decision about
+  which of eight existing types deserve an inbox's worth of email
+  noise, better made as its own later stage than bundled into "add a
+  provider."
+
+  `resetPasswordForUser` (`actions/users.ts`) now emails the user their
+  new temporary password directly, replacing the admin's manual
+  out-of-band step from Phase 4 Stage 1. A real tradeoff, named rather
+  than hidden: this puts a plaintext credential in an email body, which
+  is common practice but not best practice (a reset *link* would avoid
+  it, at the cost of a token table and expiry logic this stage didn't
+  scope). Accepted here the same way the original admin-assisted design
+  was accepted in Phase 4 -- proportionate to a portfolio project with
+  no real patient data, not something to carry into a system handling
+  real health records without revisiting it.
+
+  The reset itself is already committed to the database (password
+  changed, audit entry written) before the email is attempted, so a
+  Resend outage can't block it -- `sendPasswordResetEmail` is wrapped
+  in its own `try`/`catch`, and `resetPasswordForUser` now returns
+  `{ temporaryPassword, emailSent }` instead of just the password.
+  `ResetPasswordButton.tsx` shows the same one-time password dialog
+  either way, but with different copy: "emailed to them" when
+  `emailSent` is true, "share this out of band" when it's false. The
+  temporary password is kept in the return value even on the success
+  path -- not dropped now that email exists -- specifically so that
+  fallback has something to show.
+
+  `lib/email.ts` builds its `Resend` client inside the function call,
+  not at module load, so importing it (via `actions/users.ts`) doesn't
+  throw before a test's mock gets a chance to intercept the call --
+  `tests/integration/users.test.ts` now `vi.mock`s the whole module,
+  the first use of Vitest's module mocking anywhere in this project,
+  so the existing reset-password tests exercise the real
+  authorization/audit/database logic without depending on network
+  access or a real `RESEND_API_KEY` in CI. Two new tests assert the
+  mock receives the target user's actual email/name/password, and that
+  a rejected send still leaves `emailSent: false` without the reset
+  itself failing.
+
+  **Not yet verified against a live Resend account** -- unlike Phase 6
+  Stages 1 and 2, there was no real external account to connect to for
+  this session, so this stage ships with integration-test coverage of
+  the application logic only. Before this delivers a real email in
+  production (or even in local dev beyond the mocked tests), a Resend
+  account and `RESEND_API_KEY` need creating, and `EMAIL_FROM` needs to
+  point at a domain verified in that account's dashboard -- see the
+  `.env.example` comments for both.
