@@ -24,6 +24,7 @@ export function ResetPasswordButton({
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(
     null,
   );
+  const [emailSent, setEmailSent] = useState(false);
   const [copied, setCopied] = useState(false);
 
   function handleReset() {
@@ -36,8 +37,10 @@ export function ResetPasswordButton({
 
     startTransition(async () => {
       try {
-        const { temporaryPassword: generated } = await resetPassword(userId);
+        const { temporaryPassword: generated, emailSent: sent } =
+          await resetPassword(userId);
         setTemporaryPassword(generated);
+        setEmailSent(sent);
         setCopied(false);
       } catch (error) {
         toast.error(
@@ -74,8 +77,9 @@ export function ResetPasswordButton({
             <DialogTitle>New temporary password</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Shown once. Copy it now and share it with {userName} out of band
-            -- it won&rsquo;t be shown again.
+            {emailSent
+              ? `An email with this password has been sent to ${userName}. It's shown here too, as a fallback -- it won't be shown again.`
+              : `We couldn't email this to ${userName} -- share it with them out of band instead. It won't be shown again.`}
           </p>
           <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3 font-mono text-sm">
             <span className="flex-1 break-all">{temporaryPassword}</span>

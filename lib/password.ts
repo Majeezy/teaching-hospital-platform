@@ -12,11 +12,11 @@ export function verifyPassword(password: string, passwordHash: string) {
 }
 
 /**
- * Used for admin-assisted password resets -- the admin communicates
- * this to the user out-of-band (no email provider exists anywhere in
- * this project). base64url keeps it free of characters that break
- * copy-paste into a terminal or URL; 16 bytes is comfortably past the
- * app's own 8-character minimum.
+ * Used for admin-assisted password resets -- emailed to the user
+ * directly (Phase 6 Stage 3), with the admin sharing it out-of-band as
+ * a fallback if that email fails to send. base64url keeps it free of
+ * characters that break copy-paste into a terminal or URL; 16 bytes is
+ * comfortably past the app's own 8-character minimum.
  */
 export function generateTemporaryPassword() {
   return randomBytes(16).toString("base64url");

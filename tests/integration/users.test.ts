@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import {
@@ -8,6 +8,14 @@ import {
   resetPasswordForUser,
 } from "@/actions/users";
 import { AuthorizationError, type SessionUser } from "@/lib/permissions";
+import { sendPasswordResetEmail } from "@/lib/email";
+
+// Password reset now sends a real email (Phase 6 Stage 3) -- mocked here
+// so these tests exercise the authorization/audit/DB logic without
+// depending on network access or a real RESEND_API_KEY in CI.
+vi.mock("@/lib/email", () => ({
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("user management authorization (real database)", () => {
   let adminUserId: string;
@@ -131,11 +139,12 @@ describe("user management authorization (real database)", () => {
   });
 
   it("lets an admin reset another user's password, invalidating the old one", async () => {
-    const { temporaryPassword } = await resetPasswordForUser(
+    const { temporaryPassword, emailSent } = await resetPasswordForUser(
       asAdmin(),
       patientUserId,
     );
     expect(temporaryPassword.length).toBeGreaterThanOrEqual(16);
+    expect(emailSent).toBe(true);
 
     const updated = await prisma.user.findUniqueOrThrow({
       where: { id: patientUserId },
@@ -149,6 +158,45 @@ describe("user management authorization (real database)", () => {
       updated.passwordHash,
     );
     expect(oldPasswordStillWorks).toBe(false);
+    expect(newPasswordWorks).toBe(true);
+  });
+
+  it("emails the target user the temporary password", async () => {
+    vi.mocked(sendPasswordResetEmail).mockClear();
+
+    const { temporaryPassword } = await resetPasswordForUser(
+      asAdmin(),
+      patientUserId,
+    );
+    const patient = await prisma.user.findUniqueOrThrow({
+      where: { id: patientUserId },
+    });
+
+    expect(sendPasswordResetEmail).toHaveBeenCalledWith({
+      to: patient.email,
+      name: patient.name,
+      temporaryPassword,
+    });
+  });
+
+  it("still resets the password, just without emailSent, if sending fails", async () => {
+    vi.mocked(sendPasswordResetEmail).mockRejectedValueOnce(
+      new Error("Resend outage"),
+    );
+
+    const { temporaryPassword, emailSent } = await resetPasswordForUser(
+      asAdmin(),
+      patientUserId,
+    );
+    expect(emailSent).toBe(false);
+
+    const updated = await prisma.user.findUniqueOrThrow({
+      where: { id: patientUserId },
+    });
+    const newPasswordWorks = await verifyPassword(
+      temporaryPassword,
+      updated.passwordHash,
+    );
     expect(newPasswordWorks).toBe(true);
   });
 
