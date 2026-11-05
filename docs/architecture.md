@@ -423,7 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
-| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), 3 (real email delivery), and 4 (rate limiting) are complete. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), 3 (real email delivery), 4 (rate limiting), and 5 (a harder security pass) are complete. |
 
 ### Phase 1 breakdown
 
@@ -600,7 +600,7 @@ scope note above.)
 | 2 | Real file uploads: `Document` (migrated since Phase 0, unused until now) backed by Vercel Blob, private store, client-side upload (`@vercel/blob/client`) to stay under the 4.5MB Server Action body limit. Documents aren't appointment-scoped in the schema, so they're shown two ways: inside `ClinicalRecordsPanel` on an appointment (listing everything on file for that patient, reusing the appointment's own `canEdit`/`isShadowingStudent` access rule rather than a second one) and as a "Documents" section on the patient's own profile page. Excluded from shadowing access entirely (same as prescriptions/tests); admin keeps read-only oversight (same as every other clinical record type); only the uploader can delete. |
 | 3 | Real email delivery via Resend — wired up for admin-assisted password resets only; in-app notifications stay in-app for now (see the deviations summary below for why). |
 | 4 | Rate limiting on login/registration — Upstash Redis (`@upstash/ratelimit`), via the same Vercel-native-integration pattern as Stages 1–3. |
-| 5 | A harder security pass: `reactivateUser`, department FK-conflict UX, and anything else the Phase 4 Stage 2 audit flagged as "accepted for now" rather than fixed — not started. |
+| 5 | A harder security pass: `reactivateUser` (plus the matching UI across staff/students/patients) and friendly department FK-conflict handling — the two items Phase 4 Stage 2's audit flagged as "accepted for now" rather than fixed. |
 | 6 | Data subject tooling (export/delete a patient's own data) and a final Known Limitations pass once the above stages land — not started. |
 
 ## Summary: deviations from the original brief
@@ -927,13 +927,6 @@ doesn't have to read the whole log to find them.
   admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
   admin-provisioned rather than self-registered; notifications (Phase 3
   Stage 1) are in-app only, no email/push.
-- **No `reactivateUser` action** -- deactivating a user (Phase 1 Stage 2)
-  is currently irreversible through the UI; the only fix today is a
-  direct database update.
-- **No FK-conflict handling on department deletion** -- deleting a
-  department that still has staff or appointments referencing it throws a
-  raw Prisma constraint error instead of a friendly message (Phase 4
-  Stage 2). A UX gap, not a security one.
 - **Shadowing access is scoped to notes and diagnoses only**, never
   prescriptions or test results (Phase 2 Stage 3) -- a deliberate reading
   of the brief's "scoped, not full record parity" requirement, not an
@@ -1327,3 +1320,42 @@ specifically looking for.
   stage -- an upgrade is a separate, deliberate decision -- but worth
   resolving before the next real deployment. See the note the user was
   given at the end of this stage's session.
+
+- Phase 6 Stage 5 (a harder security pass): closed the two items Phase 4
+  Stage 2's audit explicitly flagged as "accepted for now" -- rate
+  limiting (the third) shipped in Stage 4.
+
+  `reactivateUserForUser` (`actions/users.ts`) mirrors
+  `deactivateUserForUser`'s shape -- admin-only, flips `isActive`, writes
+  an audit entry -- but deliberately *without* the self-target and
+  admin-target guards `deactivateUserForUser` has. Those guards exist to
+  stop an admin locking out themselves or another admin; neither risk
+  exists in the reverse direction, and an admin account can never
+  actually be inactive in the first place (`deactivateUserForUser`
+  already blocks any admin from becoming a target), so guarding against
+  it in `reactivateUserForUser` would be defending against a state the
+  rest of the system doesn't allow to exist. `StaffTable.tsx`,
+  `StudentsTable.tsx`, and `PatientsTable.tsx` all previously rendered
+  nothing in the actions column once an account went inactive -- a true
+  dead end in the UI, even though the underlying data was always
+  recoverable by hand. Each now shows a "Reactivate" button in that
+  case, same confirm-free pattern as the existing "Reset password"
+  button (reactivating, unlike deactivating, isn't a destructive action
+  that benefits from a confirmation step).
+
+  `deleteDepartmentForUser` (`actions/departments.ts`) now catches
+  Prisma's `P2003` (foreign key constraint violation) and rethrows a
+  friendly message naming the actual reason -- staff, appointments, or
+  placements still referencing the department -- instead of letting the
+  raw Prisma error reach the UI's toast verbatim. No component change
+  needed: `DepartmentsTable.tsx` already rendered `error.message`
+  directly from its catch block.
+
+  New integration tests mirror the existing authorization-test pattern
+  for both: role checks, an audit-entry assertion for reactivation
+  (`tests/integration/users.test.ts`), and a delete-with-a-doctor-still-
+  attached case asserting the friendly message rather than a raw Prisma
+  error (`tests/integration/departments.test.ts`). Full suite
+  afterward: 171 unit/integration tests, 8 E2E specs (rerun in full
+  since the Staff/Students/Patients table components changed), all
+  green.

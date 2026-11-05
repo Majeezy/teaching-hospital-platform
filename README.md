@@ -15,8 +15,9 @@ for more on that boundary.
 **Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
 🚧 Phase 6 (production-readiness hardening) under way: a separate
 dev/prod database, real file uploads, real email delivery (admin-assisted
-password reset), and rate limiting on login/registration are done; a
-harder security pass and data-subject tooling are still pending.
+password reset), rate limiting on login/registration, and a harder
+security pass (account reactivation, friendlier department-deletion
+errors) are done; data-subject tooling is still pending.
 
 ## Database
 
@@ -42,8 +43,8 @@ unrestricted access to a patient's full record.
 
 Full design rationale, the entity-relationship diagram, the permissions
 matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
-Deliberate scope cuts (no self-service password reset, no rate
-limiting, etc.) are listed explicitly in that document's
+Deliberate scope cuts (no self-service password reset, no data-subject
+export/delete tooling, etc.) are listed explicitly in that document's
 [Known limitations](docs/architecture.md#known-limitations) section.
 
 ## Tech stack
@@ -139,7 +140,7 @@ the integration tests.
 - [x] Phase 6, Stage 2 — Real file uploads (patient documents via Vercel Blob)
 - [x] Phase 6, Stage 3 — Real email delivery (Resend, admin-assisted password reset)
 - [x] Phase 6, Stage 4 — Rate limiting (login + registration, Upstash Redis)
-- [ ] Phase 6, Stage 5 — Harder security pass
+- [x] Phase 6, Stage 5 — Harder security pass (account reactivation, department FK-conflict UX)
 - [ ] Phase 6, Stage 6 — Data subject tooling & final docs pass
 
 Phases 0–5 are complete: the original scope, plus a real visual
