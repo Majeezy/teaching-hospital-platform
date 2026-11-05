@@ -4,6 +4,11 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import {
+  checkIpLimit,
+  getRegisterIpLimiter,
+  getServerActionClientIp,
+} from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Name is too short"),
@@ -21,6 +26,15 @@ export type RegisterPatientResult =
 export async function registerPatient(
   input: z.infer<typeof registerSchema>,
 ): Promise<RegisterPatientResult> {
+  const ip = await getServerActionClientIp();
+  const ipOk = await checkIpLimit(getRegisterIpLimiter(), ip);
+  if (!ipOk) {
+    return {
+      success: false,
+      error: "Too many registration attempts. Please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };

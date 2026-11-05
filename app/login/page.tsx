@@ -38,7 +38,11 @@ function LoginForm() {
     setSubmitting(false);
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(
+        result.error === "RateLimited"
+          ? "Too many sign-in attempts. Please wait a few minutes and try again."
+          : "Invalid email or password.",
+      );
       return;
     }
 

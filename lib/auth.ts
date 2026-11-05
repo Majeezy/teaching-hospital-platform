@@ -2,6 +2,12 @@ import type { AuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import {
+  checkIpLimit,
+  getLoginEmailLimiter,
+  getLoginIpLimiter,
+  parseClientIp,
+} from "@/lib/rate-limit";
 
 // A fixed, precomputed bcrypt hash with no corresponding real password --
 // compared against when the email doesn't match a user at all, so a
@@ -32,8 +38,24 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const ip = parseClientIp(req?.headers?.["x-forwarded-for"]);
+        const [ipOk, { success: emailOk }] = await Promise.all([
+          checkIpLimit(getLoginIpLimiter(), ip),
+          getLoginEmailLimiter().limit(credentials.email),
+        ]);
+        if (!ipOk || !emailOk) {
+          // Thrown (not returned) so the callback route redirects with
+          // `error=RateLimited` instead of the generic `CredentialsSignin`
+          // every other failure produces here -- the login page uses that
+          // to show a throttle-specific message. Distinguishing "rate
+          // limited" from "wrong password" doesn't leak account existence:
+          // both buckets are keyed the same way whether or not the email
+          // belongs to a real account.
+          throw new Error("RateLimited");
+        }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
