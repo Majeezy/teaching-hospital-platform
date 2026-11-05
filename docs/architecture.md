@@ -423,7 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
-| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), and 3 (real email delivery) are complete. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), 3 (real email delivery), and 4 (rate limiting) are complete. |
 
 ### Phase 1 breakdown
 
@@ -599,7 +599,7 @@ scope note above.)
 | 1 | Separate dev/prod database. The Vercel Marketplace path (`vercel integration add neon`) stayed blocked on a terms-acceptance deep link that 404s for this account/CLI combination, confirmed three times across two different stages. Worked around by using Neon's *own* "Connect to Vercel" flow instead (console.neon.tech), which pushes env vars directly via API without going through the broken Marketplace registration step. Connected to the Neon project already backing production, with "create a branch for the development environment" checked — Neon created a copy-on-write branch (`ep-round-credit-*`) off the existing data rather than a separate empty project, so Development got the real schema and starting data without touching Production's. Vercel's Development-scoped `DATABASE_URL`/`DIRECT_URL` were repointed at the new branch's pooled/unpooled connection strings; Production's were never touched (confirmed via `vercel env ls` timestamps before and after). |
 | 2 | Real file uploads: `Document` (migrated since Phase 0, unused until now) backed by Vercel Blob, private store, client-side upload (`@vercel/blob/client`) to stay under the 4.5MB Server Action body limit. Documents aren't appointment-scoped in the schema, so they're shown two ways: inside `ClinicalRecordsPanel` on an appointment (listing everything on file for that patient, reusing the appointment's own `canEdit`/`isShadowingStudent` access rule rather than a second one) and as a "Documents" section on the patient's own profile page. Excluded from shadowing access entirely (same as prescriptions/tests); admin keeps read-only oversight (same as every other clinical record type); only the uploader can delete. |
 | 3 | Real email delivery via Resend — wired up for admin-assisted password resets only; in-app notifications stay in-app for now (see the deviations summary below for why). |
-| 4 | Rate limiting on login/registration — not started. |
+| 4 | Rate limiting on login/registration — Upstash Redis (`@upstash/ratelimit`), via the same Vercel-native-integration pattern as Stages 1–3. |
 | 5 | A harder security pass: `reactivateUser`, department FK-conflict UX, and anything else the Phase 4 Stage 2 audit flagged as "accepted for now" rather than fixed — not started. |
 | 6 | Data subject tooling (export/delete a patient's own data) and a final Known Limitations pass once the above stages land — not started. |
 
@@ -927,9 +927,6 @@ doesn't have to read the whole log to find them.
   admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
   admin-provisioned rather than self-registered; notifications (Phase 3
   Stage 1) are in-app only, no email/push.
-- **No rate limiting anywhere** (login, registration) -- would need a new
-  external dependency (e.g. Upstash) for a single-instance portfolio
-  deployment with no existing abuse signal to justify it (Phase 4 Stage 2).
 - **No `reactivateUser` action** -- deactivating a user (Phase 1 Stage 2)
   is currently irreversible through the UI; the only fix today is a
   direct database update.
@@ -1271,3 +1268,62 @@ specifically looking for.
   account and `RESEND_API_KEY` need creating, and `EMAIL_FROM` needs to
   point at a domain verified in that account's dashboard -- see the
   `.env.example` comments for both.
+
+- Phase 6 Stage 4 (rate limiting): provisioned via
+  [Upstash](https://upstash.com) Redis (`vercel integration add
+  upstash/upstash-kv`), the same Vercel-native-integration pattern as
+  Neon and Blob. `lib/rate-limit.ts` holds three sliding-window
+  limiters built on `@upstash/ratelimit`: login by IP (10/5 min) and by
+  email (5/5 min) in `lib/auth.ts`'s `authorize()` callback, and
+  registration by IP (5/10 min) in `registerPatient`
+  (`actions/auth.ts`). Either bucket tripping on login throws a
+  `RateLimited` error from `authorize()`, which next-auth v4 surfaces
+  as `?error=RateLimited` on the callback redirect (confirmed by
+  reading `node_modules/next-auth/core/routes/callback.js` -- a thrown
+  error's `message` becomes the error code verbatim, unlike a plain
+  `return null`, which always becomes the generic `CredentialsSignin`).
+  `app/login/page.tsx` checks for that specific value to show a
+  throttle-specific message; registration's limiter returns its
+  message directly through the existing `RegisterPatientResult` shape,
+  no page change needed. Neither path leaks account existence: both
+  buckets are keyed the same way whether or not the email belongs to a
+  real account.
+
+  Only login needs a per-email bucket in addition to per-IP --
+  registration has no existing account for a bucket to protect, so IP
+  alone is enough there.
+
+  **Two things only showed up by actually running the full test suite
+  against this, not by reasoning about it in the abstract:**
+  - `next/headers`' `headers()` throws when called outside a real HTTP
+    request -- exactly what happens when `tests/integration/security-hardening.test.ts`
+    calls `registerPatient` directly. `getServerActionClientIp()`
+    catches that and falls back to `"unknown"`, the same value used
+    when the header itself is simply absent, rather than adding a
+    test-only branch.
+  - The first full E2E run, with the IP limiter treating only the
+    literal string `"unknown"` as "no real signal," failed two specs
+    deep into the suite with every login bouncing back to `/login`.
+    Querying the actual Redis keys the limiter had written
+    (`ratelimit:login:ip:::1:...`) showed why: with no reverse proxy in
+    front, Next.js's own legacy-request shim fills `x-forwarded-for`
+    from the raw loopback socket address (`::1` locally) rather than
+    leaving it unset, so every local request was sharing one real,
+    enforced bucket instead of being skipped -- and the suite's ~20
+    total login attempts across its specs comfortably exceeds 10 in
+    five minutes. Fixed by treating `::1` and `127.0.0.1` the same as
+    `"unknown"` in `checkIpLimit`. On Vercel, the platform always
+    injects the real client's `x-forwarded-for`, so this exemption only
+    ever widens a hole that local dev/CI already had -- it changes
+    nothing about production enforcement. Full suite afterward: 17 unit
+    tests (7 new, covering `parseClientIp`/`checkIpLimit`/
+    `getServerActionClientIp` directly), 150 integration tests, 8 E2E
+    specs, all green.
+
+  **Separately noticed while running this stage's E2E suite, unrelated
+  to rate limiting:** Next.js 16.4.0 (the version this project was on)
+  has a known security advisory; its own CLI now halts a build once to
+  recommend `next upgrade --agent=security`. Not acted on in this
+  stage -- an upgrade is a separate, deliberate decision -- but worth
+  resolving before the next real deployment. See the note the user was
+  given at the end of this stage's session.

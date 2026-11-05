@@ -14,9 +14,9 @@ for more on that boundary.
 
 **Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
 🚧 Phase 6 (production-readiness hardening) under way: a separate
-dev/prod database, real file uploads, and real email delivery (admin-assisted
-password reset) are done; rate limiting and a harder security pass are
-still pending.
+dev/prod database, real file uploads, real email delivery (admin-assisted
+password reset), and rate limiting on login/registration are done; a
+harder security pass and data-subject tooling are still pending.
 
 ## Database
 
@@ -138,7 +138,7 @@ the integration tests.
 - [x] Phase 6, Stage 1 — Separate dev/prod database (Neon branch, via Neon's own Vercel-connect flow)
 - [x] Phase 6, Stage 2 — Real file uploads (patient documents via Vercel Blob)
 - [x] Phase 6, Stage 3 — Real email delivery (Resend, admin-assisted password reset)
-- [ ] Phase 6, Stage 4 — Rate limiting
+- [x] Phase 6, Stage 4 — Rate limiting (login + registration, Upstash Redis)
 - [ ] Phase 6, Stage 5 — Harder security pass
 - [ ] Phase 6, Stage 6 — Data subject tooling & final docs pass
 
@@ -147,8 +147,11 @@ identity and a round of production-readiness hardening. Phase 6 (the
 rest of that hardening) is under way. See `docs/architecture.md` for
 what each phase actually contains, including the two genuine bugs
 (dark mode never actually activating; a sequential-query latency bug on
-the activity detail page) found during Phase 5, and two infrastructure
+the activity detail page) found during Phase 5, two infrastructure
 findings from Phase 6 Stage 2 (client-upload token generation needs a
 static Blob read-write token even though every other Blob operation
 accepts OIDC; the CSP's `connect-src` needed an explicit exception for
-the browser-to-Blob upload).
+the browser-to-Blob upload), and a local-environment finding from Phase 6
+Stage 4 (Next.js's own request shim fills `x-forwarded-for` from the raw
+loopback address when there's no real reverse proxy in front, rather than
+leaving it unset).
