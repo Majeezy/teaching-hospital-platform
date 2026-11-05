@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireRole, type SessionUser } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
@@ -70,9 +71,26 @@ export async function deleteDepartmentForUser(
 ) {
   requireRole(user, "HOSPITAL_ADMIN", "SYSTEM_ADMIN");
 
-  const department = await prisma.department.delete({
-    where: { id: departmentId },
-  });
+  let department;
+  try {
+    department = await prisma.department.delete({
+      where: { id: departmentId },
+    });
+  } catch (error) {
+    // P2003: foreign key constraint violation -- staff, appointments, or
+    // placements still reference this department. Surfaced as a friendly
+    // message instead of the raw Prisma error the UI's toast would
+    // otherwise show verbatim.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      throw new Error(
+        "This department still has staff, appointments, or placements assigned to it. Reassign or remove them first.",
+      );
+    }
+    throw error;
+  }
 
   await audit({
     actorId: user.id,

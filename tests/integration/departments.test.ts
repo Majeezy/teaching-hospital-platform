@@ -130,4 +130,39 @@ describe("department management authorization (real database)", () => {
     expect(entry).not.toBeNull();
     expect(entry?.action).toBe("CREATED_DEPARTMENT");
   });
+
+  it("returns a friendly error instead of a raw Prisma error when deleting a department still referenced by staff", async () => {
+    const department = await createDepartmentForUser(asAdmin(), {
+      name: `FK Test Department ${Date.now()}`,
+    });
+    createdDepartmentIds.push(department.id);
+
+    const passwordHash = await hashPassword("test-password-123");
+    const doctorUser = await prisma.user.create({
+      data: {
+        name: "FK Test Doctor",
+        email: `test-dept-fk-doctor-${Date.now()}@example.com`,
+        passwordHash,
+        doctorProfile: {
+          create: {
+            departmentId: department.id,
+            specialization: "General",
+            licenseNumber: `FK-TEST-${Date.now()}`,
+          },
+        },
+      },
+    });
+
+    try {
+      await expect(
+        deleteDepartmentForUser(asAdmin(), department.id),
+      ).rejects.toThrow(
+        "This department still has staff, appointments, or placements assigned to it. Reassign or remove them first.",
+      );
+    } finally {
+      // Cascades to the DoctorProfile, clearing the FK reference so
+      // afterEach's department cleanup succeeds.
+      await prisma.user.delete({ where: { id: doctorUser.id } });
+    }
+  });
 });

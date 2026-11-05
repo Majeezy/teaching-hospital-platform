@@ -83,6 +83,31 @@ export async function deactivateUserForUser(
   return updated;
 }
 
+// No self-target or admin-target guard here, unlike deactivation -- an
+// admin account can never actually be inactive (deactivateUserForUser
+// above blocks that), and reactivating your own already-active account
+// is a harmless no-op, not a risk worth guarding against.
+export async function reactivateUserForUser(
+  user: SessionUser,
+  targetUserId: string,
+) {
+  requireRole(user, "HOSPITAL_ADMIN", "SYSTEM_ADMIN");
+
+  const updated = await prisma.user.update({
+    where: { id: targetUserId },
+    data: { isActive: true },
+  });
+
+  await audit({
+    actorId: user.id,
+    action: "REACTIVATED_USER",
+    entityType: "User",
+    entityId: targetUserId,
+  });
+
+  return updated;
+}
+
 /**
  * Closes the "password reset" gap from the original brief. There's
  * still no self-service path (staff/student accounts are
@@ -162,6 +187,11 @@ export async function listUsers() {
 export async function deactivateUser(targetUserId: string) {
   const user = await requireUser();
   return deactivateUserForUser(user, targetUserId);
+}
+
+export async function reactivateUser(targetUserId: string) {
+  const user = await requireUser();
+  return reactivateUserForUser(user, targetUserId);
 }
 
 export async function resetPassword(targetUserId: string) {

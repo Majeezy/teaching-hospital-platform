@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deactivateUser } from "@/actions/users";
+import { deactivateUser, reactivateUser } from "@/actions/users";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 import type { listPatientsForUser } from "@/actions/patients";
 
@@ -48,6 +48,20 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
       try {
         await deactivateUser(patient.id);
         toast.success("Account deactivated");
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Something went wrong",
+        );
+      }
+    });
+  }
+
+  function handleReactivate(patient: Patient) {
+    startTransition(async () => {
+      try {
+        await reactivateUser(patient.id);
+        toast.success("Account reactivated");
         router.refresh();
       } catch (error) {
         toast.error(
@@ -107,22 +121,33 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
                 </Badge>
               </TableCell>
               <TableCell>
-                {patient.isActive && (
-                  <div className="flex items-center justify-end gap-1">
-                    <ResetPasswordButton
-                      userId={patient.id}
-                      userName={patient.name}
-                    />
+                <div className="flex items-center justify-end gap-1">
+                  {patient.isActive ? (
+                    <>
+                      <ResetPasswordButton
+                        userId={patient.id}
+                        userName={patient.name}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => handleDeactivate(patient)}
+                      >
+                        Deactivate
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       variant="ghost"
                       size="sm"
                       disabled={isPending}
-                      onClick={() => handleDeactivate(patient)}
+                      onClick={() => handleReactivate(patient)}
                     >
-                      Deactivate
+                      Reactivate
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

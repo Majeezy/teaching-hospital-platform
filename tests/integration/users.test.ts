@@ -5,6 +5,7 @@ import {
   deactivateUserForUser,
   getCurrentUserForUser,
   listUsersForUser,
+  reactivateUserForUser,
   resetPasswordForUser,
 } from "@/actions/users";
 import { AuthorizationError, type SessionUser } from "@/lib/permissions";
@@ -124,6 +125,30 @@ describe("user management authorization (real database)", () => {
 
     expect(entry).not.toBeNull();
     expect(entry?.action).toBe("DEACTIVATED_USER");
+  });
+
+  it("allows a hospital admin to reactivate a user", async () => {
+    // patientUserId is currently deactivated from the tests above.
+    const updated = await reactivateUserForUser(asAdmin(), patientUserId);
+    expect(updated.isActive).toBe(true);
+  });
+
+  it("rejects a patient reactivating another user", async () => {
+    await expect(
+      reactivateUserForUser(asPatient(), adminUserId),
+    ).rejects.toThrow(AuthorizationError);
+  });
+
+  it("writes an audit log entry when a user is reactivated", async () => {
+    await reactivateUserForUser(asAdmin(), patientUserId);
+
+    const entry = await prisma.auditLog.findFirst({
+      where: { actorId: adminUserId, entityId: patientUserId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    expect(entry).not.toBeNull();
+    expect(entry?.action).toBe("REACTIVATED_USER");
   });
 
   it("rejects a patient resetting another user's password", async () => {

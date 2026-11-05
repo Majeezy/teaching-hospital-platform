@@ -28,7 +28,7 @@ import {
   type CreateStudentInput,
   type listStudentsForUser,
 } from "@/actions/students";
-import { deactivateUser } from "@/actions/users";
+import { deactivateUser, reactivateUser } from "@/actions/users";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 type Student = Awaited<ReturnType<typeof listStudentsForUser>>[number];
@@ -77,6 +77,20 @@ export function StudentsTable({ students }: { students: Student[] }) {
       try {
         await deactivateUser(student.id);
         toast.success("Account deactivated");
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Something went wrong",
+        );
+      }
+    });
+  }
+
+  function handleReactivate(student: Student) {
+    startTransition(async () => {
+      try {
+        await reactivateUser(student.id);
+        toast.success("Account reactivated");
         router.refresh();
       } catch (error) {
         toast.error(
@@ -142,22 +156,33 @@ export function StudentsTable({ students }: { students: Student[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {student.isActive && (
-                    <div className="flex items-center justify-end gap-1">
-                      <ResetPasswordButton
-                        userId={student.id}
-                        userName={student.name}
-                      />
+                  <div className="flex items-center justify-end gap-1">
+                    {student.isActive ? (
+                      <>
+                        <ResetPasswordButton
+                          userId={student.id}
+                          userName={student.name}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isPending}
+                          onClick={() => handleDeactivate(student)}
+                        >
+                          Deactivate
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         variant="ghost"
                         size="sm"
                         disabled={isPending}
-                        onClick={() => handleDeactivate(student)}
+                        onClick={() => handleReactivate(student)}
                       >
-                        Deactivate
+                        Reactivate
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

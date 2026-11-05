@@ -38,7 +38,7 @@ import {
   type CreateNurseInput,
   type listStaffForUser,
 } from "@/actions/staff";
-import { deactivateUser } from "@/actions/users";
+import { deactivateUser, reactivateUser } from "@/actions/users";
 import { ResetPasswordButton } from "@/components/admin/ResetPasswordButton";
 
 type StaffMember = Awaited<ReturnType<typeof listStaffForUser>>[number];
@@ -126,6 +126,20 @@ export function StaffTable({
     });
   }
 
+  function handleReactivate(member: StaffMember) {
+    startTransition(async () => {
+      try {
+        await reactivateUser(member.id);
+        toast.success("Account reactivated");
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Something went wrong",
+        );
+      }
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end gap-2">
@@ -186,21 +200,31 @@ export function StaffTable({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {member.isActive && (
-                      <div className="flex items-center justify-end gap-1">
-                        <ResetPasswordButton
-                          userId={member.id}
-                          userName={member.name}
-                        />
+                    <div className="flex items-center justify-end gap-1">
+                      {member.isActive ? (
+                        <>
+                          <ResetPasswordButton
+                            userId={member.id}
+                            userName={member.name}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeactivate(member)}
+                          >
+                            Deactivate
+                          </Button>
+                        </>
+                      ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeactivate(member)}
+                          onClick={() => handleReactivate(member)}
                         >
-                          Deactivate
+                          Reactivate
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
