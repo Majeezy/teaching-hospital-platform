@@ -12,12 +12,11 @@ for more on that boundary.
 **Live demo:** [teaching-hospital-platform.vercel.app](https://teaching-hospital-platform.vercel.app)
 — sign in with the demo admin account below, or register as a patient.
 
-**Status:** ✅ Phases 0–5 complete (0–4: core system; 5: visual identity).
-🚧 Phase 6 (production-readiness hardening) under way: a separate
-dev/prod database, real file uploads, real email delivery (admin-assisted
-password reset), rate limiting on login/registration, and a harder
-security pass (account reactivation, friendlier department-deletion
-errors) are done; data-subject tooling is still pending.
+**Status:** ✅ Phases 0–6 complete — the original scope (0–4), a real
+visual identity (5), and a round of production-readiness hardening (6):
+a separate dev/prod database, real file uploads, real email delivery,
+rate limiting, a harder security pass, and patient-facing data-subject
+tooling (export/delete your own data).
 
 ## Database
 
@@ -43,9 +42,10 @@ unrestricted access to a patient's full record.
 
 Full design rationale, the entity-relationship diagram, the permissions
 matrix, and the roadmap live in [`docs/architecture.md`](docs/architecture.md).
-Deliberate scope cuts (no self-service password reset, no data-subject
-export/delete tooling, etc.) are listed explicitly in that document's
-[Known limitations](docs/architecture.md#known-limitations) section.
+Deliberate scope cuts (no self-service password reset, "delete my data"
+anonymizes rather than erases, etc.) are listed explicitly in that
+document's [Known limitations](docs/architecture.md#known-limitations)
+section.
 
 ## Tech stack
 
@@ -141,18 +141,20 @@ the integration tests.
 - [x] Phase 6, Stage 3 — Real email delivery (Resend, admin-assisted password reset)
 - [x] Phase 6, Stage 4 — Rate limiting (login + registration, Upstash Redis)
 - [x] Phase 6, Stage 5 — Harder security pass (account reactivation, department FK-conflict UX)
-- [ ] Phase 6, Stage 6 — Data subject tooling & final docs pass
+- [x] Phase 6, Stage 6 — Data subject tooling (export/delete) & final docs pass
 
-Phases 0–5 are complete: the original scope, plus a real visual
-identity and a round of production-readiness hardening. Phase 6 (the
-rest of that hardening) is under way. See `docs/architecture.md` for
-what each phase actually contains, including the two genuine bugs
-(dark mode never actually activating; a sequential-query latency bug on
-the activity detail page) found during Phase 5, two infrastructure
-findings from Phase 6 Stage 2 (client-upload token generation needs a
-static Blob read-write token even though every other Blob operation
-accepts OIDC; the CSP's `connect-src` needed an explicit exception for
-the browser-to-Blob upload), and a local-environment finding from Phase 6
-Stage 4 (Next.js's own request shim fills `x-forwarded-for` from the raw
-loopback address when there's no real reverse proxy in front, rather than
-leaving it unset).
+All six phases are complete: the original scope (0–4), a real visual
+identity (5), and a round of production-readiness hardening (6). See
+`docs/architecture.md` for what each phase actually contains, including
+the two genuine bugs (dark mode never actually activating; a
+sequential-query latency bug on the activity detail page) found during
+Phase 5, two infrastructure findings from Phase 6 Stage 2 (client-upload
+token generation needs a static Blob read-write token even though every
+other Blob operation accepts OIDC; the CSP's `connect-src` needed an
+explicit exception for the browser-to-Blob upload), a local-environment
+finding from Phase 6 Stage 4 (Next.js's own request shim fills
+`x-forwarded-for` from the raw loopback address when there's no real
+reverse proxy in front, rather than leaving it unset), and the
+anonymize-rather-than-erase decision behind Phase 6 Stage 6's "delete my
+data" (a patient's clinical records have no cascade back from their
+account by design, the same way `AuditLog.actorId` never cascades).

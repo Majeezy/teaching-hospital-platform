@@ -423,7 +423,7 @@ education platform on top of a foundation that's already correct.
 | **3 — Cross-cutting** | Notifications → internal messaging → search → remaining dashboard polish. See the Stage 1–4 breakdown below. (Audit logs already exist from Phase 0.) |
 | **4 — Harden & ship** | Admin-assisted password reset → security review → E2E tests → UI/UX polish → deployment hardening → finish docs. See the Stage 1–6 breakdown below. **All five originally-scoped phases complete as of here.** |
 | **5 — Visual identity** | Opened after Phase 4 shipped, at the user's explicit request to move this from a portfolio demo toward something closer to a system usable by a real clinic, and to replace the generic shadcn default look with an actual visual identity. See the Stage 1–6 breakdown below — design only; all six stages are the visual identity, sequenced design-first per the user's own choice when this was scoped. **Production-readiness hardening (real file uploads, real email delivery, rate limiting, a harder security pass) is the other half of that original request and has not started** — see the note at the start of the Phase 5 breakdown for why it's a separate phase, not a stage here. |
-| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note, now underway. See the Stage 1–6 breakdown below. Stages 1 (separate dev/prod database), 2 (real file uploads), 3 (real email delivery), 4 (rate limiting), and 5 (a harder security pass) are complete. |
+| **6 — Production-readiness hardening** | The other half of the Phase 5 scope note. See the Stage 1–6 breakdown below. **All six stages complete as of here.** |
 
 ### Phase 1 breakdown
 
@@ -601,7 +601,7 @@ scope note above.)
 | 3 | Real email delivery via Resend — wired up for admin-assisted password resets only; in-app notifications stay in-app for now (see the deviations summary below for why). |
 | 4 | Rate limiting on login/registration — Upstash Redis (`@upstash/ratelimit`), via the same Vercel-native-integration pattern as Stages 1–3. |
 | 5 | A harder security pass: `reactivateUser` (plus the matching UI across staff/students/patients) and friendly department FK-conflict handling — the two items Phase 4 Stage 2's audit flagged as "accepted for now" rather than fixed. |
-| 6 | Data subject tooling (export/delete a patient's own data) and a final Known Limitations pass once the above stages land — not started. |
+| 6 | Data subject tooling: a patient can export their own data (JSON) and "delete" their own account (anonymize PII, deactivate -- see the deviations summary below for why not a hard delete). Plus a final Known Limitations pass across the whole document now that Phase 6 is done. |
 
 ## Summary: deviations from the original brief
 
@@ -916,17 +916,30 @@ Phase 3 is now complete (Stages 1-4).
 
 Phase 4 is now complete (Stages 1-6). All five phases are complete.
 
+- Phase 6 Stage 6: "delete a patient's own data" is anonymize-and-
+  deactivate, not a hard delete. `Appointment.patientId` and every
+  clinical-record table's `patientId` have no `onDelete: Cascade` back
+  to `PatientProfile`/`User` -- a deliberate schema choice from Phase 0,
+  the same reasoning as `AuditLog.actorId` never cascading -- so an
+  actual erase would mean deleting a patient's whole clinical history
+  along with their account, not just their account. That also happens
+  to mirror real-world medical-record retention law reasonably closely.
+  Decided with the user rather than assumed.
+
 ## Known limitations
 
 Deliberate scope cuts, not gaps found late. Each one is a decision made
 explicitly somewhere in the build log above; collected here so a reviewer
 doesn't have to read the whole log to find them.
 
-- **No self-service password reset, no email delivery anywhere.** No email
-  provider has been chosen in this project at all. Password reset is
-  admin-assisted (Phase 4 Stage 1) the same way staff/student accounts are
-  admin-provisioned rather than self-registered; notifications (Phase 3
-  Stage 1) are in-app only, no email/push.
+- **No self-service password reset.** Reset is admin-assisted (Phase 4
+  Stage 1) the same way staff/student accounts are admin-provisioned
+  rather than self-registered -- the admin now triggers it and the user
+  is emailed their new temporary password directly (Resend, Phase 6
+  Stage 3), rather than the admin relaying it out of band by hand. In-app
+  notifications (Phase 3 Stage 1) are still in-app only, no email/push --
+  that channel was deliberately not extended past password reset (see
+  the Phase 6 Stage 3 build log entry for why).
 - **Shadowing access is scoped to notes and diagnoses only**, never
   prescriptions or test results (Phase 2 Stage 3) -- a deliberate reading
   of the brief's "scoped, not full record parity" requirement, not an
@@ -949,10 +962,17 @@ doesn't have to read the whole log to find them.
   configuration (Section 7). Revocability, the actual requirement behind
   "database sessions," is preserved via a DB-fresh `isActive`/roles check
   on every request instead.
-- **Single Neon database for both development and production** -- a
-  deliberate choice for a portfolio project with only fictional data;
-  nothing in this app would benefit from separate environments the way a
-  real multi-developer team's app would.
+- **A patient's "delete my data" anonymizes and deactivates, it doesn't
+  erase** (Phase 6 Stage 6) -- name, email, and profile PII are scrubbed
+  and the account is deactivated, but appointments/notes/diagnoses/
+  prescriptions/test orders/documents stay on file, now detached from
+  any reachable identity. A real hard delete isn't possible without also
+  deleting that clinical history, since `Appointment.patientId` and
+  every clinical-record table's `patientId` have no cascade back from
+  `PatientProfile`/`User` by design (Phase 0) -- and even if it were
+  possible, it would mean an engineering shortcut quietly overriding the
+  kind of record-retention requirement a real hospital is legally bound
+  by, which isn't this project's call to make unilaterally.
 
 ## Phase 5 build log
 
@@ -1359,3 +1379,68 @@ specifically looking for.
   afterward: 171 unit/integration tests, 8 E2E specs (rerun in full
   since the Staff/Students/Patients table components changed), all
   green.
+
+- Phase 6 Stage 6 (data subject tooling, final docs pass): closes out
+  Phase 6. **Decided with the user first:** whether "delete a patient's
+  own data" should be a self-service anonymize-and-deactivate, a hard
+  delete gated on having no clinical history, or a full cascading hard
+  delete requiring a schema migration. Went with anonymize-and-
+  deactivate -- see the deviations summary and Known Limitations entries
+  above for the full reasoning (the schema's lack of a cascade from
+  clinical records back to the patient isn't an oversight to route
+  around, it's the thing being respected).
+
+  `exportMyDataForUser` (`actions/patients.ts`) is one query anchored on
+  the caller's own `userId`, returning their profile, appointments
+  (with doctor/department names), clinical notes, diagnoses,
+  prescriptions, test orders and results, documents, sent/received
+  messages, and notifications. Deliberately *not* built on top of the
+  existing cross-role appointment/clinical-record readers
+  (`listAppointmentsForUser`, `getAppointmentRecordsForUser`, etc.) --
+  those exist to scope *other* roles' access to a patient's data; a
+  patient reading their own data needs no extra scoping logic beyond
+  "everything reachable through my own `PatientProfile`/`User` row,"
+  which a single nested `select` already guarantees. `/patient/profile`
+  gained a "Download my data" button that serializes the result to JSON
+  client-side (`URL.createObjectURL`) -- no new storage needed, since
+  the file never has to exist anywhere but the browser.
+
+  `deleteMyDataForUser` scrubs `name`/`email`/profile PII, overwrites
+  `passwordHash` with a freshly generated random hash (so even an admin
+  later reactivating the account -- Phase 6 Stage 5 -- can't be
+  reactivating it *into* the old credential), sets `isActive: false`,
+  and writes a `DELETED_OWN_DATA` audit entry, all without touching
+  `Appointment`/`ClinicalNote`/`Diagnosis`/`Prescription`/`TestOrder`/
+  `Document`. Email uniqueness is handled by keying the anonymized
+  address off the user's own `id` (a cuid), needing no collision check.
+  The "Delete my account" button signs the user out immediately via
+  `next-auth/react`'s `signOut()` rather than relying on the JWT
+  callback's own next revalidation to catch the now-`isActive: false`
+  account.
+
+  New integration tests (`tests/integration/patients.test.ts`) cover
+  both: a second patient fixture proves the export is actually scoped
+  to the caller (asserts the other patient's appointment id is absent,
+  and that the raw JSON never contains a string unique to their
+  record) rather than merely "returns something plausible"; the delete
+  test asserts the account's identity fields changed, `isActive` is
+  `false`, a pre-existing clinical note's row count is unchanged before
+  and after, and the audit entry exists.
+
+  **Final Known Limitations pass**, per this stage's own scope: found
+  two stale entries while sweeping the whole document against current
+  code rather than trusting the existing list. "No self-service
+  password reset, no email delivery anywhere" was written before Phase
+  6 Stage 3 added real email delivery for password reset specifically
+  -- reworded to say what's actually still true (reset stays
+  admin-initiated; in-app notifications still aren't emailed) instead
+  of implying no email exists anywhere. "Single Neon database for both
+  development and production" was flatly wrong since Phase 6 Stage 1 --
+  removed outright rather than reworded, since nothing about it is true
+  anymore. Both would have kept misleading a reader indefinitely; a
+  "final docs pass" that only adds new entries without checking old
+  ones for drift isn't actually final. Full suite re-run after this
+  stage's code changes: 174 unit/integration tests, 8 E2E specs, all
+  green.
+
+Phase 6 is now complete (Stages 1-6). All six phases are complete.
