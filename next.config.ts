@@ -42,6 +42,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // Lets `next build`/`next dev` warn (and, for coding agents, block
+    // once with a one-time reminder) when the installed version is
+    // affected by a published security advisory, instead of staying
+    // silently out of date the way this app was before this upgrade.
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
