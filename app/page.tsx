@@ -9,9 +9,6 @@ export default function Home() {
         <Stethoscope size={22} />
       </div>
 
-      <p className="text-sm font-medium uppercase tracking-widest text-brand-accent">
-        Portfolio project
-      </p>
       <h1 className="max-w-xl font-heading text-3xl font-semibold text-foreground text-balance">
         Teaching Hospital Platform
       </h1>
