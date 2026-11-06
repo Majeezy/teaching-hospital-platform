@@ -1444,3 +1444,16 @@ specifically looking for.
   green.
 
 Phase 6 is now complete (Stages 1-6). All six phases are complete.
+
+## Post-Phase-6 maintenance
+
+- Next.js 16.4.0 -> 16.4.5: a published security advisory flagged
+  during Phase 6 Stage 4's E2E run (`next build` started halting once
+  with a one-time reminder rather than staying silently out of date --
+  see that stage's build log entry) was resolved with a same-major
+  patch bump, no codemod needed. Run in an isolated git worktree,
+  verified there (typecheck, full test suite, a production build, and a
+  rebuild confirming the advisory no longer triggers) before merging to
+  `main`. Also set `experimental.agentUpgrade: "security"` in
+  `next.config.ts`, so this app gets the same one-time warning on any
+  future advisory instead of relying on someone noticing by hand.
