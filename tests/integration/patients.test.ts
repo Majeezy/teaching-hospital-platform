@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import {
+  deleteMyDataForUser,
+  exportMyDataForUser,
   getMyProfileForUser,
   listPatientsForUser,
   updateMyProfileForUser,
@@ -12,6 +14,8 @@ describe("patient management authorization (real database)", () => {
   let adminUserId: string;
   let patientUserId: string;
   let doctorUserId: string;
+  let secondPatientUserId: string;
+  let departmentId: string;
 
   beforeAll(async () => {
     const passwordHash = await hashPassword("test-password-123");
@@ -48,6 +52,7 @@ describe("patient management authorization (real database)", () => {
     patientUserId = patient.id;
 
     const department = await prisma.department.findFirstOrThrow();
+    departmentId = department.id;
     const doctor = await prisma.user.create({
       data: {
         name: "Test Doctor",
@@ -63,11 +68,53 @@ describe("patient management authorization (real database)", () => {
       },
     });
     doctorUserId = doctor.id;
+
+    const secondPatient = await prisma.user.create({
+      data: {
+        name: "Other Patient",
+        email: `test-patients-other-${stamp}@example.com`,
+        passwordHash,
+        roles: { create: { roleId: patientRole.id } },
+        patientProfile: {
+          create: { dateOfBirth: new Date("1985-05-05") },
+        },
+      },
+    });
+    secondPatientUserId = secondPatient.id;
   });
 
   afterAll(async () => {
+    // FK-safe order: clinical records/appointments before the users they
+    // reference, same reasoning as tests/e2e/fixtures.ts's cleanup.
+    const patientProfileIds = await prisma.patientProfile.findMany({
+      where: { userId: { in: [patientUserId, secondPatientUserId] } },
+      select: { id: true },
+    });
+    const profileIds = patientProfileIds.map((p) => p.id);
+    await prisma.testOrder.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.prescription.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.diagnosis.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.clinicalNote.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.document.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.appointment.deleteMany({ where: { patientId: { in: profileIds } } });
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: { in: [patientUserId, secondPatientUserId, doctorUserId] } },
+          { recipientId: { in: [patientUserId, secondPatientUserId, doctorUserId] } },
+        ],
+      },
+    });
+    await prisma.notification.deleteMany({
+      where: { userId: { in: [patientUserId, secondPatientUserId] } },
+    });
+    await prisma.auditLog.deleteMany({
+      where: { actorId: { in: [adminUserId, patientUserId, secondPatientUserId] } },
+    });
     await prisma.user.deleteMany({
-      where: { id: { in: [adminUserId, patientUserId, doctorUserId] } },
+      where: {
+        id: { in: [adminUserId, patientUserId, doctorUserId, secondPatientUserId] },
+      },
     });
   });
 
@@ -155,5 +202,151 @@ describe("patient management authorization (real database)", () => {
     await expect(
       updateMyProfileForUser(asDoctor(), { allergies: [] }),
     ).rejects.toThrow(AuthorizationError);
+  });
+
+  it("rejects a non-patient exporting data via exportMyData", async () => {
+    await expect(exportMyDataForUser(asAdmin())).rejects.toThrow(
+      AuthorizationError,
+    );
+  });
+
+  it("exports the patient's own records, messages, and documents, but never another patient's", async () => {
+    const profile = await prisma.patientProfile.findUniqueOrThrow({
+      where: { userId: patientUserId },
+    });
+    const otherProfile = await prisma.patientProfile.findUniqueOrThrow({
+      where: { userId: secondPatientUserId },
+    });
+
+    const doctorProfile = await prisma.doctorProfile.findUniqueOrThrow({
+      where: { userId: doctorUserId },
+    });
+
+    const [appointment, otherAppointment] = await Promise.all([
+      prisma.appointment.create({
+        data: {
+          patientId: profile.id,
+          doctorId: doctorProfile.id,
+          departmentId,
+          scheduledAt: new Date(),
+          reason: "Export test checkup",
+        },
+      }),
+      prisma.appointment.create({
+        data: {
+          patientId: otherProfile.id,
+          doctorId: doctorProfile.id,
+          departmentId,
+          scheduledAt: new Date(),
+          reason: "Other patient's appointment -- must never appear in the export",
+        },
+      }),
+    ]);
+
+    await prisma.clinicalNote.create({
+      data: {
+        patientId: profile.id,
+        appointmentId: appointment.id,
+        authorId: doctorUserId,
+        content: "Export test note",
+      },
+    });
+    await prisma.document.create({
+      data: {
+        patientId: profile.id,
+        uploadedById: patientUserId,
+        fileUrl: "https://example.test/export-test.pdf",
+        fileName: "export-test.pdf",
+        sizeBytes: 1024,
+        type: "application/pdf",
+      },
+    });
+    await prisma.message.create({
+      data: {
+        senderId: doctorUserId,
+        recipientId: patientUserId,
+        subject: "Export test message",
+        body: "This should appear in the export.",
+      },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: patientUserId,
+        type: "TEST",
+        title: "Export test notification",
+        body: "This should appear in the export.",
+      },
+    });
+
+    const exported = await exportMyDataForUser(asPatient());
+
+    expect(exported.id).toBe(patientUserId);
+    expect(
+      exported.patientProfile?.appointments.some((a) => a.id === appointment.id),
+    ).toBe(true);
+    expect(
+      exported.patientProfile?.clinicalNotes.some(
+        (n) => n.content === "Export test note",
+      ),
+    ).toBe(true);
+    expect(
+      exported.patientProfile?.documents.some(
+        (d) => d.fileName === "export-test.pdf",
+      ),
+    ).toBe(true);
+    expect(
+      exported.receivedMessages.some(
+        (m) => m.subject === "Export test message",
+      ),
+    ).toBe(true);
+    expect(
+      exported.notifications.some(
+        (n) => n.title === "Export test notification",
+      ),
+    ).toBe(true);
+
+    // Never contains the other patient's appointment -- proves this is
+    // scoped to the caller's own data, not every appointment in the DB.
+    expect(
+      exported.patientProfile?.appointments.some(
+        (a) => a.id === otherAppointment.id,
+      ),
+    ).toBe(false);
+    expect(JSON.stringify(exported)).not.toContain("Other patient's appointment");
+  });
+
+  it("anonymizes and deactivates the account on delete, keeping clinical records intact, with an audit entry", async () => {
+    const before = await prisma.user.findUniqueOrThrow({
+      where: { id: patientUserId },
+    });
+    const recordCountBefore = await prisma.clinicalNote.count({
+      where: { patient: { userId: patientUserId } },
+    });
+
+    await deleteMyDataForUser(asPatient());
+
+    const after = await prisma.user.findUniqueOrThrow({
+      where: { id: patientUserId },
+      include: { patientProfile: true },
+    });
+
+    expect(after.name).toBe("Deleted Patient");
+    expect(after.email).not.toBe(before.email);
+    expect(after.email).toContain("deleted-");
+    expect(after.isActive).toBe(false);
+    expect(after.patientProfile?.contactPhone).toBeNull();
+    expect(after.patientProfile?.emergencyContact).toBeNull();
+    expect(after.patientProfile?.allergies).toEqual([]);
+
+    const recordCountAfter = await prisma.clinicalNote.count({
+      where: { patient: { userId: patientUserId } },
+    });
+    expect(recordCountAfter).toBe(recordCountBefore);
+
+    const entry = await prisma.auditLog.findFirst({
+      where: { actorId: patientUserId, action: "DELETED_OWN_DATA" },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(entry).not.toBeNull();
   });
 });

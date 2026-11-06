@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/permissions";
 import { getMyProfile } from "@/actions/patients";
 import { listMyDocuments } from "@/actions/documents";
 import { ProfileForm } from "@/components/patient/ProfileForm";
+import { DataPrivacySection } from "@/components/patient/DataPrivacySection";
 import { DocumentsSection } from "@/components/documents/DocumentsSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/format-date";
@@ -65,6 +66,8 @@ async function ProfileContent() {
         currentUserId={user.id}
         documents={documents}
       />
+
+      <DataPrivacySection />
     </div>
   );
 }
