@@ -9,6 +9,11 @@ not intended for real patient data, real diagnoses, or any real clinical
 use — see [Section 10 of the architecture doc](docs/architecture.md#10-security-architecture)
 for more on that boundary.
 
+This project has a predecessor: **HSPS**, a university group project
+built years earlier with the same core idea. See
+[`docs/legacy-hsps.md`](docs/legacy-hsps.md) for what it was and how it
+compares.
+
 **Live demo:** [teaching-hospital-platform.vercel.app](https://teaching-hospital-platform.vercel.app)
 — sign in with the demo admin account below, or register as a patient.
 
