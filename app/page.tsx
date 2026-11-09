@@ -12,6 +12,9 @@ export default function Home() {
       <h1 className="max-w-xl font-heading text-3xl font-semibold text-foreground text-balance">
         Teaching Hospital Platform
       </h1>
+      <p className="text-xs uppercase tracking-widest text-muted-foreground">
+        By ORBITAL
+      </p>
       <p className="max-w-md text-muted-foreground">
         A simulated hospital management system and medical-student
         clinical-education platform, sharing one backend, one database, and

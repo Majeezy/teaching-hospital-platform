@@ -2,7 +2,8 @@
 
 A simulated hospital management system and medical-student clinical-education
 platform, sharing one backend, one database, and one role-based permission
-model, by [Kudzaishe Majeza](https://github.com/Majeezy).
+model, by [Kudzaishe Majeza](https://github.com/Majeezy), ORBITAL —
+*Connect. Secure. Build.*
 
 **This is a portfolio/educational project.** All data is fictional. It is
 not intended for real patient data, real diagnoses, or any real clinical
